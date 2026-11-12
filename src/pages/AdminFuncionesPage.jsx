@@ -1046,7 +1046,7 @@ export default function AdminFuncionesPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-panel-border bg-surface-dark p-3 text-[11px] text-on-surface-muted flex items-start gap-2">
+            <div className="rounded-lg border border-panel-border bg-surface-dark p-3 text-[11px] text-on-surface-muted flex items-center gap-2">
               <span className="material-symbols-outlined text-secondary text-base">info</span>
               Si la sala tiene una función en curso, la edición de su layout queda bloqueada hasta
               que finalice.
@@ -1061,11 +1061,15 @@ export default function AdminFuncionesPage() {
               </p>
             ) : null}
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-panel-border">
-              <button type="button" className="admin-btn-ghost" onClick={() => setFunctionModalOpen(false)}>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                className="admin-btn-ghost h-11 justify-center"
+                onClick={() => setFunctionModalOpen(false)}
+              >
                 Cancelar
               </button>
-              <button type="submit" className="admin-btn-primary">
+              <button type="submit" className="admin-btn-primary h-11 justify-center sm:w-48">
                 <span className="material-symbols-outlined text-base">
                   {editingFuncion ? 'save' : 'event_available'}
                 </span>

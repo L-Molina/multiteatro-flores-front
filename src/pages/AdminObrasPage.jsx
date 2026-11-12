@@ -258,10 +258,6 @@ export default function AdminObrasPage() {
             <span>/</span>
             <span className="text-on-surface">Gestión de Cartelera &amp; Espectáculos</span>
           </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-card border border-panel-border text-primary text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <span>Sincronizado con la boletería digital</span>
-          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2 border-b border-panel-border/60">
@@ -402,14 +398,7 @@ export default function AdminObrasPage() {
       <section className="flex flex-col gap-4 w-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-base font-bold text-on-surface">Programación de Obras</h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-surface-card border border-panel-border text-xs font-semibold text-secondary">
-              {filtradas.length} Mostradas
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-on-surface-muted text-xs">
-            <span>Orden:</span>
-            <span className="text-secondary font-semibold">Cartelera oficial</span>
+            <h2 className="text-base font-bold text-on-surface">Programación de Obras</h2>            
           </div>
         </div>
 

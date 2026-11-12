@@ -1,7 +1,5 @@
-/* Historial de compras mock.
-   Igual que el catálogo, vive en memoria durante la sesión y se reinicia al
-   recargar. Las compras nuevas se agregan desde el checkout; estas dos compras
-   de ejemplo permiten mostrar el historial desde la primera visita. */
+/* Historial de compras mock. En memoria durante la sesión y se reinicia al
+   recargar. Las compras nuevas se agregan desde el checkout. */
 
 import {
   DAY,

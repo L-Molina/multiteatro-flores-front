@@ -54,12 +54,6 @@ export default function LoginPage() {
     <div className="min-h-[calc(100vh-5rem)] w-full">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-10 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center page-enter">
         <section className="flex flex-col gap-6">
-          <div className="inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full bg-[#0c211a] border border-[#1e4d3a]">
-            <span className="w-2 h-2 rounded-full bg-secondary" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-secondary">
-              Entorno de prototipo
-            </span>
-          </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
             Iniciar Sesión
           </h1>
@@ -115,7 +109,6 @@ export default function LoginPage() {
               </div>
               <div>
                 <h2 className="text-lg font-bold">Iniciar sesión</h2>
-                <p className="text-xs text-[#b8c7bf]">Acceso a tu cuenta del prototipo</p>
               </div>
             </div>
 

@@ -28,9 +28,7 @@ npm run preview  # sirve el build
 Requiere Node.js 20 o superior.
 
 ## Cómo probar los roles
-
-No hay cuentas semilla ni credenciales visibles. Todas las cuentas se crean desde
-**Crear cuenta** (`/register`) y se pierden al recargar la página.
+Las cuentas se crean desde **Crear cuenta** (`/register`) y se pierden al recargar la página.
 
 | Rol | Puede hacer | No puede hacer |
 | --- | --- | --- |

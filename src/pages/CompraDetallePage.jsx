@@ -235,13 +235,6 @@ export default function CompraDetallePage() {
             <span className="material-symbols-outlined text-base text-secondary">download</span>
             Descargar comprobante
           </button>
-          <Link
-            className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-secondary hover:bg-secondary-hover text-[#071510] text-xs font-extrabold uppercase tracking-wider transition-colors"
-            to={`/checkout?obra=${compra.obraId}`}
-          >
-            <span className="material-symbols-outlined text-base">confirmation_number</span>
-            Comprar otra función
-          </Link>
         </aside>
       </div>
 

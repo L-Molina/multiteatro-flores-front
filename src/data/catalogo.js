@@ -1,6 +1,5 @@
 /* Catálogo mock compartido por la cartelera, el checkout y los paneles de administración.
-   Los datos replican el esquema y la carga de prueba del backend real (multiteatro_db):
-   10 obras, 6 teatros, 18 salas de 25 butacas y 36 funciones.
+   Los datos son simulaciones del esquema del backend real.
    Al no haber persistencia real, el estado vive en CatalogContext durante la sesión. */
 
 const DAY = 24 * 60 * 60 * 1000

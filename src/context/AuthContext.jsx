@@ -4,6 +4,21 @@ import { normalizarEmail } from '../utils/validacion'
 
 const nextId = (list) => (list.length ? Math.max(...list.map((item) => item.id)) + 1 : 1)
 
+/* Cuenta semilla para probar el panel sin pasar por el registro. */
+const SEED_USER = {
+  id: 1,
+  nombre: 'Lautaro',
+  email: 'superadmin@multiteatroflores.com',
+  dni: '30111222',
+  tel: '1122334455',
+  localidad: 'CABA',
+  password: 'superadmin123',
+  rol: ROLES.SUPERADMIN,
+  teatroId: null,
+  teatroNombre: null,
+  createdAt: new Date().toISOString(),
+}
+
 function sesionDe(user) {
   return {
     id: user.id,
@@ -19,10 +34,9 @@ function sesionDe(user) {
   }
 }
 
-/* Los usuarios se mantienen en memoria: igual que el resto del prototipo,
-   se reinician al recargar la página. No hay llamadas al backend. */
+/* Los usuarios se mantienen en memoria. No hay llamadas al backend. */
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState([SEED_USER])
   const [user, setUser] = useState(null)
 
   const emailEnUso = useCallback(

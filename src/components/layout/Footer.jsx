@@ -52,16 +52,12 @@ export default function Footer() {
             <div className="flex flex-wrap gap-1.5 text-xs text-white">
               {['Mercado Pago', '3 y 6 Cuotas', 'Visa / Mastercard', 'Banco Ciudad 20% OFF'].map(
                 (item) => (
-                  <span key={item} className="px-2 py-1 rounded bg-[#0e241c] border border-[#1b4234]">
+                  <span key={item} className="px-2 py-1 rounded border border-[#1b4234]">
                     {item}
                   </span>
                 ),
               )}
             </div>
-            <p className="text-xs text-secondary mt-1">
-              Entradas digitales directas a tu celular con código QR anti-fraude, sin necesidad
-              de impresión.
-            </p>
           </div>
 
           <div className="flex flex-col gap-3">
