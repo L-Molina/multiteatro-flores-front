@@ -107,7 +107,6 @@ export function CatalogProvider({ children }) {
         destacada: false,
         publicada: payload.publicada !== false,
         preventa: payload.preventa !== false,
-        salaId: Number(payload.salaId) || 1,
         schedule: payload.schedule || 'Función a confirmar',
       }
       return [...prev, obra]
@@ -129,7 +128,6 @@ export function CatalogProvider({ children }) {
               vip: payload.vip != null ? Number(payload.vip) : obra.vip,
               duracion:
                 payload.duracion != null ? Number(payload.duracion) : obra.duracion,
-              salaId: payload.salaId != null ? Number(payload.salaId) : obra.salaId,
             }
           : obra,
       ),

@@ -66,7 +66,6 @@ const OBRAS_BASE = [
     destacada: false,
     publicada: true,
     preventa: true,
-    salaId: 1,
   },
   {
     id: 2,
@@ -86,7 +85,6 @@ const OBRAS_BASE = [
     destacada: true,
     publicada: true,
     preventa: true,
-    salaId: 2,
   },
   {
     id: 3,
@@ -106,7 +104,6 @@ const OBRAS_BASE = [
     destacada: true,
     publicada: true,
     preventa: true,
-    salaId: 3,
   },
   {
     id: 4,
@@ -126,7 +123,6 @@ const OBRAS_BASE = [
     destacada: true,
     publicada: true,
     preventa: true,
-    salaId: 4,
   },
   {
     id: 5,
@@ -146,7 +142,6 @@ const OBRAS_BASE = [
     destacada: false,
     publicada: true,
     preventa: true,
-    salaId: 1,
   },
   {
     id: 6,
@@ -166,7 +161,6 @@ const OBRAS_BASE = [
     destacada: false,
     publicada: true,
     preventa: true,
-    salaId: 4,
   },
   {
     id: 7,
@@ -186,7 +180,6 @@ const OBRAS_BASE = [
     destacada: false,
     publicada: true,
     preventa: true,
-    salaId: 6,
   },
   {
     id: 8,
@@ -206,7 +199,6 @@ const OBRAS_BASE = [
     destacada: true,
     publicada: true,
     preventa: true,
-    salaId: 2,
   },
   {
     id: 9,
@@ -226,7 +218,6 @@ const OBRAS_BASE = [
     destacada: true,
     publicada: true,
     preventa: true,
-    salaId: 5,
   },
   {
     id: 10,
@@ -246,7 +237,6 @@ const OBRAS_BASE = [
     destacada: true,
     publicada: true,
     preventa: true,
-    salaId: 3,
   },
 ]
 

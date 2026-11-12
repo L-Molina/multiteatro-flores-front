@@ -81,14 +81,6 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
-              <li className="flex items-center gap-1">
-                <span className="material-symbols-outlined text-[0.875rem] text-secondary">
-                  chevron_right
-                </span>
-                <Link className="inline-flex items-center min-h-[24px] py-1 hover:text-secondary transition-colors" to="/login">
-                  Iniciar sesión
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

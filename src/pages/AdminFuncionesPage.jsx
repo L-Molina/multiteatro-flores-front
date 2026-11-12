@@ -460,7 +460,7 @@ export default function AdminFuncionesPage() {
             <select
               value={obraFiltro}
               onChange={(event) => setObraFiltro(event.target.value)}
-              className="select-arrow px-3.5 py-3 rounded bg-[#0c211a] border border-[#1e4d3a] text-on-surface text-xs font-semibold focus:outline-none focus:border-secondary cursor-pointer max-w-[220px]"
+              className="select-arrow min-w-[220px] px-3.5 py-3.5 rounded bg-[#0c211a] border border-[#1e4d3a] text-on-surface text-sm font-semibold focus:outline-none focus:border-secondary cursor-pointer max-w-[220px]"
               aria-label="Filtrar por obra"
             >
               <option value="">Todas las obras</option>

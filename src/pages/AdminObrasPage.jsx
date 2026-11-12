@@ -12,7 +12,6 @@ const EMPTY_FORM = {
   titulo: '',
   elenco: '',
   genero: 'Teatro • Comedia',
-  salaId: 1,
   precio: 30000,
   vip: 39000,
   duracion: 90,
@@ -64,7 +63,8 @@ export default function AdminObrasPage() {
   const [selectedId, setSelectedId] = useState(null)
   const [nowIso] = useState(() => new Date().toISOString().slice(0, 16))
 
-  const salaDeObra = (obra) => getSala(obra.salaId) || getSala(funciones.find((f) => f.obraId === obra.id)?.salaId)
+  const salaDeObra = (obra) =>
+    getSala(funciones.find((f) => f.obraId === obra.id)?.salaId)
 
   const calcularOcupacion = (obra) => {
     const propias = funciones.filter((funcion) => funcion.obraId === obra.id)
@@ -110,7 +110,7 @@ export default function AdminObrasPage() {
 
   const abrirNueva = () => {
     setEditing(null)
-    setForm({ ...EMPTY_FORM, salaId: salas[0]?.id || 1 })
+    setForm(EMPTY_FORM)
     setFormError('')
     setImageError('')
     setModalOpen(true)
@@ -122,7 +122,6 @@ export default function AdminObrasPage() {
       titulo: obra.titulo,
       elenco: obra.elenco,
       genero: obra.genero,
-      salaId: obra.salaId || salas[0]?.id || 1,
       precio: obra.precio,
       vip: obra.vip,
       duracion: obra.duracion,
@@ -192,7 +191,6 @@ export default function AdminObrasPage() {
       sinopsis:
         limpiarMultilinea(form.sinopsis, MAX.sinopsis).trim() || 'Sinopsis a confirmar.',
       schedule: limpiarTexto(form.schedule, MAX.schedule).trim() || 'Función a confirmar',
-      salaId: Number(form.salaId),
     }
     if (!payload.img) {
       delete payload.img
@@ -630,41 +628,20 @@ export default function AdminObrasPage() {
               }
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="admin-field">
-              <label className="admin-label" htmlFor="obra-genero">
-                Género
-              </label>
-              <select
-                id="obra-genero"
-                className="admin-input"
-                value={form.genero}
-                onChange={(event) => setForm((prev) => ({ ...prev, genero: event.target.value }))}
-              >
-                {GENEROS.map((item) => (
-                  <option key={item}>{item}</option>
-                ))}
-              </select>
-            </div>
-            <div className="admin-field">
-              <label className="admin-label" htmlFor="obra-sala">
-                Sala asignada
-              </label>
-              <select
-                id="obra-sala"
-                className="admin-input"
-                value={form.salaId}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, salaId: event.target.value }))
-                }
-              >
-                {salas.map((sala) => (
-                  <option key={sala.id} value={sala.id}>
-                    {sala.teatro} — {sala.nombre} ({sala.capacidad})
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="admin-field">
+            <label className="admin-label" htmlFor="obra-genero">
+              Género
+            </label>
+            <select
+              id="obra-genero"
+              className="admin-input"
+              value={form.genero}
+              onChange={(event) => setForm((prev) => ({ ...prev, genero: event.target.value }))}
+            >
+              {GENEROS.map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="admin-field">
