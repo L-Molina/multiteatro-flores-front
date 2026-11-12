@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-labelledby="titulo descripcion">
+  <title id="titulo">Toc Toc</title>
+  <desc id="descripcion">Afiche de la comedia Toc Toc, de Laurent Baffie</desc>
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#061712"/>
+      <stop offset="0.55" stop-color="#0b2a20"/>
+      <stop offset="1" stop-color="#123a2c"/>
+    </linearGradient>
+    <radialGradient id="brillo" cx="0.82" cy="0.18" r="0.55">
+      <stop offset="0" stop-color="#efbf69" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#efbf69" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#fondo)"/>
+  <rect width="800" height="1000" fill="url(#brillo)"/>
+
+  <!-- Motivo de círculos concéntricos: la obsesión y el reloj -->
+  <g fill="none" stroke="#efbf69" stroke-width="2">
+    <circle cx="648" cy="208" r="34" opacity="0.55"/>
+    <circle cx="648" cy="208" r="64" opacity="0.4"/>
+    <circle cx="648" cy="208" r="94" opacity="0.28"/>
+    <circle cx="648" cy="208" r="124" opacity="0.18"/>
+    <circle cx="648" cy="208" r="154" opacity="0.1"/>
+  </g>
+  <g stroke="#efbf69" stroke-width="5" stroke-linecap="round" opacity="0.7">
+    <line x1="648" y1="208" x2="648" y2="176"/>
+    <line x1="648" y1="208" x2="670" y2="220"/>
+  </g>
+
+  <!-- Puerta y picaporte -->
+  <rect x="560" y="640" width="170" height="290" rx="6" fill="#071510" stroke="#efbf69" stroke-opacity="0.35" stroke-width="2"/>
+  <circle cx="596" cy="790" r="9" fill="#efbf69" opacity="0.7"/>
+  <path d="M 596 800 q 22 18 0 36" fill="none" stroke="#efbf69" stroke-width="3" opacity="0.5"/>
+
+  <text x="64" y="112" fill="#efbf69" font-family="Helvetica, Arial, sans-serif" font-size="22" letter-spacing="7" font-weight="700">MULTITEATRO FLORES</text>
+
+  <text x="60" y="424" fill="#f6efe2" font-family="Helvetica, Arial, sans-serif" font-size="168" font-weight="900" letter-spacing="-4">TOC</text>
+  <text x="60" y="576" fill="#f6efe2" font-family="Helvetica, Arial, sans-serif" font-size="168" font-weight="900" letter-spacing="-4">TOC</text>
+
+  <line x1="64" y1="636" x2="430" y2="636" stroke="#efbf69" stroke-width="3" opacity="0.65"/>
+
+  <text x="64" y="694" fill="#efbf69" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="2">DE LAURENT BAFFIE</text>
+  <text x="64" y="748" fill="#cfc4ad" font-family="Helvetica, Arial, sans-serif" font-size="22" letter-spacing="1">UNA COMEDIA SOBRE EL DESORDEN</text>
+
+  <g font-family="Helvetica, Arial, sans-serif" font-weight="700">
+    <rect x="64" y="850" width="256" height="46" rx="23" fill="#efbf69"/>
+    <text x="192" y="881" fill="#071510" font-size="20" text-anchor="middle" letter-spacing="2">TEATRO • COMEDIA</text>
+    <text x="64" y="944" fill="#8fa79a" font-size="19" letter-spacing="3">TEMPORADA 2026 • ATP</text>
+  </g>
+</svg>

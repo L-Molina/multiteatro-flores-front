@@ -1,0 +1,571 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  overscroll-behavior: none;
+  background-color: #071510;
+  color: #fdfbf7;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+/* ============================================================
+   Acordeones de preguntas frecuentes
+   ============================================================ */
+
+.faq-item summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-item[open] .faq-chevron {
+  transform: rotate(180deg);
+}
+
+.faq-chevron {
+  transition: transform 0.2s ease;
+}
+
+/* ============================================================
+   Carrusel principal a pantalla completa
+   ============================================================ */
+
+.hero-slide {
+  animation: heroIn 0.7s ease;
+}
+
+@keyframes heroIn {
+  from {
+    opacity: 0.55;
+    transform: scale(1.03);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* El título de la tarjeta de obra solo se colorea al pasar por el texto */
+.obra-card .obra-title {
+  transition: color 0.2s ease;
+}
+
+.obra-card .obra-title:hover {
+  color: #efbf69;
+}
+
+.trend-dot {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  flex: 0 0 auto;
+}
+
+.trend-dot-mark {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #1b4234;
+  transition:
+    width 0.25s ease,
+    background-color 0.25s ease;
+}
+
+.trend-dot.is-active .trend-dot-mark {
+  width: 22px;
+  background: #efbf69;
+}
+
+/* ============================================================
+   Tarjetas institucionales y redes
+   ============================================================ */
+
+.about-card {
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.about-card:hover {
+  border-color: rgba(239, 191, 105, 0.5);
+  transform: translateY(-2px);
+}
+
+.social-link {
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+/* ============================================================
+   Formularios
+   ============================================================ */
+
+.form-label {
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #b8c7bf;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #071510;
+  border: 1px solid #1f3a2f;
+  color: #fdfbf7;
+  font-size: 0.875rem;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: rgba(184, 199, 191, 0.5);
+}
+
+.form-input:focus {
+  border-color: #efbf69;
+  box-shadow: 0 0 0 1px rgba(239, 191, 105, 0.4);
+}
+
+.form-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Flecha propia para los <select>: aparece completa y un poco más a la izquierda
+   que la flecha nativa, que en algunos navegadores queda recortada. */
+select.form-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.6rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b8c7bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.85rem center;
+  background-size: 1rem 1rem;
+}
+
+select.form-input option {
+  background-color: #071510;
+  color: #fdfbf7;
+}
+
+/* Los <select> del panel de administración usan .admin-input o utilidades
+   sueltas, por eso necesitan su propia flecha. */
+select.admin-input,
+select.select-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2.4rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b8c7bf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+}
+
+select.admin-input option,
+select.select-arrow option {
+  background-color: #071510;
+  color: #fdfbf7;
+}
+
+/* Inputs con ícono a la izquierda: el padding se define acá porque .form-input
+   se carga después de las utilidades de Tailwind y pisaría pl-10. */
+.form-input.input-with-icon {
+  padding-left: 2.5rem;
+}
+
+.form-error {
+  border-color: rgba(255, 180, 164, 0.6) !important;
+}
+
+.field-error {
+  font-size: 11px;
+  color: #ffb4a4;
+}
+
+/* ============================================================
+   Payment tabs
+   ============================================================ */
+
+.payment-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  background-color: rgba(12, 33, 26, 0.6);
+  border: 1px solid #1f3a2f;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.payment-tab:hover {
+  background-color: #112c22;
+  border-color: rgba(239, 191, 105, 0.4);
+}
+
+.payment-tab.is-active {
+  background-color: #0c211a;
+  border: 2px solid #efbf69;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================================
+   Plano de butacas
+   ============================================================ */
+
+.legend-seat {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.seat-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.25rem 0.25rem 0 0;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  flex: 0 0 auto;
+}
+
+.seat-btn:disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Animaciones
+   ============================================================ */
+
+.wizard-step {
+  animation: stepIn 0.3s ease;
+}
+
+@keyframes stepIn {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.45s ease;
+}
+
+@keyframes pageEnter {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   Pantalla de carga entre páginas
+   ============================================================ */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 180;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  background:
+    radial-gradient(circle at 50% 38%, #0c211a 0%, #071510 62%);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.24s ease,
+    visibility 0.24s ease;
+}
+
+.loading-screen.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loading-emblem {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid #1e4d3a;
+  border-top-color: #efbf69;
+  animation: loaderSpin 0.8s linear infinite;
+}
+
+.loading-bar {
+  width: 180px;
+  height: 3px;
+  border-radius: 999px;
+  background-color: #143327;
+  overflow: hidden;
+}
+
+.loading-bar span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: 999px;
+  background-color: #efbf69;
+  animation: loaderBar 0.9s ease-in-out infinite;
+}
+
+@keyframes loaderSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loaderBar {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+/* ============================================================
+   Modales y avisos
+   ============================================================ */
+
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(2, 10, 7, 0.75);
+  backdrop-filter: blur(3px);
+}
+
+.admin-modal-card {
+  width: 100%;
+  max-width: 38rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 1rem;
+  border: 1px solid #1e4d3a;
+  background-color: #0c211a;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  padding: 1.5rem;
+}
+
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.admin-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9fb3a8;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1e4d3a;
+  background-color: #071510;
+  color: #fdfbf7;
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.admin-input:focus {
+  border-color: #efbf69;
+}
+
+.admin-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #efbf69;
+  color: #071510;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease;
+}
+
+.admin-btn-primary:hover {
+  background-color: #ffd580;
+}
+
+.admin-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #1e4d3a;
+  background-color: #0c211a;
+  color: #fdfbf7;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: background-color 0.2s ease;
+}
+
+.admin-btn-ghost:hover {
+  background-color: #143327;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translate(-50%, 1rem);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  z-index: 200;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* El botón de baja siempre está visible como un ícono normal y se resalta
+   al pasar el mouse o al enfocar con teclado. */
+.function-card .function-delete {
+  opacity: 1;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.function-card:hover .function-delete,
+.function-card:focus-within .function-delete {
+  opacity: 1;
+  border-color: rgba(255, 180, 164, 0.55);
+}
+
+.function-card .function-delete:hover,
+.function-card .function-delete:focus-visible {
+  opacity: 1;
+  background-color: #761200;
+  color: #ffffff;
+  border-color: #ffb4a4;
+}
+
+tr.is-selected-row {
+  outline: 1px solid rgba(239, 191, 105, 0.5);
+  outline-offset: -1px;
+}
+
+/* ============================================================
+   Preferencia de movimiento reducido
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .trend-track {
+    scroll-behavior: auto;
+  }
+
+  .trend-card,
+  .trend-card-img,
+  .about-card,
+  .social-link {
+    transition: none;
+  }
+
+  .wizard-step,
+  .page-enter {
+    animation: none;
+  }
+
+  .loading-screen {
+    transition: none;
+  }
+
+  .loading-ring,
+  .loading-bar span {
+    animation: none;
+  }
+
+  .loading-bar span {
+    width: 100%;
+  }
+
+  .function-card .function-delete {
+    transition: none;
+  }
+}
