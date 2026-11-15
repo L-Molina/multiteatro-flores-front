@@ -78,18 +78,26 @@ export default function HomePage() {
     <div className="flex flex-col w-full">
       <TrendCarousel />
 
-      <div className="w-full bg-[#0e241c] border-y border-[#1b4234] py-3 overflow-hidden whitespace-nowrap flex items-center gap-8 text-on-surface-variant text-xs font-medium uppercase tracking-wider">
-        <div className="flex items-center gap-8 px-4">
-          {[
-            ['bg-secondary', '6 teatros asociados en la Ciudad de Buenos Aires'],
-            ['bg-primary', '18 salas conectadas con disponibilidad en tiempo real'],
-            ['bg-secondary', 'Butacas numeradas y plano real en cada compra'],
-            ['bg-primary', 'Entrada digital con QR anti-fraude, sin imprimir nada'],
-          ].map(([dot, text]) => (
-            <span key={text} className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${dot}`} />
-              {text}
-            </span>
+      <div className="w-full bg-[#0e241c] border-y border-[#1b4234] py-3 overflow-hidden text-on-surface-variant text-xs font-medium uppercase tracking-wider">
+        <div className="marquee-track flex w-max items-center">
+          {[0, 1].map((copy) => (
+            <div
+              key={copy}
+              className="flex items-center gap-8 px-4"
+              aria-hidden={copy === 1 ? true : undefined}
+            >
+              {[
+                ['bg-secondary', '6 teatros asociados en la Ciudad de Buenos Aires'],
+                ['bg-primary', '18 salas conectadas con disponibilidad en tiempo real'],
+                ['bg-secondary', 'Butacas numeradas y plano real en cada compra'],
+                ['bg-primary', 'Entrada digital con QR anti-fraude, sin imprimir nada'],
+              ].map(([dot, text]) => (
+                <span key={text} className="flex items-center gap-2 whitespace-nowrap">
+                  <span className={`w-2 h-2 rounded-full ${dot}`} />
+                  {text}
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -97,22 +105,12 @@ export default function HomePage() {
       <section className="w-full max-w-7xl mx-auto px-4 lg:px-8 py-16 scroll-mt-24" id="cartelera">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-5 bg-secondary rounded-full" />
-              <span className="text-xs font-bold uppercase tracking-widest text-secondary">
-                Programación Principal
-              </span>
-            </div>
             <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Las Obras De La Semana
-            </h2>
-            <p className="text-sm text-on-surface-variant max-w-xl">
-              Seleccioná tu butaca numerada en tiempo real. Boletos directos a tu smartphone con
-              código QR seguro.
-            </p>
-            <p className="flex items-start gap-1.5 text-xs text-secondary/90 max-w-xl">
+              Obras en Zona Sur
+            </h2>            
+            <p className="flex items-center gap-1.5 text-xs text-secondary/90 max-w-xl">
               <span className="material-symbols-outlined text-base shrink-0">shopping_cart_off</span>
-              Sin carrito: cada compra es para una sola función y permite hasta 6 butacas.
+              Cada compra es para una sola función y permite hasta 6 butacas.
             </p>
             {buscar ? (
               <p className="text-xs text-secondary mt-1">

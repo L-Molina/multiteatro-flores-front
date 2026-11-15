@@ -122,6 +122,7 @@ export default function CheckoutPage() {
   const [holderErrors, setHolderErrors] = useState({})
   const [pay, setPay] = useState('tarjeta')
   const [card, setCard] = useState(CARD_INITIAL)
+  const [receipt, setReceipt] = useState(null)
   const [payErrors, setPayErrors] = useState({})
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [termsError, setTermsError] = useState('')
@@ -247,6 +248,16 @@ export default function CheckoutPage() {
     })
   }
 
+  const changeReceipt = (value) => {
+    setReceipt(value)
+    setPayErrors((prev) => {
+      if (!prev.receipt) return prev
+      const next = { ...prev }
+      delete next.receipt
+      return next
+    })
+  }
+
   const validateHolder = () => {
     const errors = {}
     const nombre = holder.nombre.trim()
@@ -272,6 +283,13 @@ export default function CheckoutPage() {
   }
 
   const validatePayment = () => {
+    if (pay === 'transferencia') {
+      const errors = receipt
+        ? {}
+        : { receipt: 'Adjuntá el comprobante de la transferencia para continuar.' }
+      setPayErrors(errors)
+      return errors
+    }
     if (pay !== 'tarjeta') {
       setPayErrors({})
       return {}
@@ -384,6 +402,7 @@ export default function CheckoutPage() {
       },
       pago: pay,
       pagoLabel: payLabel,
+      comprobante: pay === 'transferencia' ? receipt : null,
       subtotal: totals.subtotal,
       servicio: totals.service,
       descuento: totals.discount,
@@ -505,6 +524,8 @@ export default function CheckoutPage() {
                   onChangePay={setPay}
                   card={card}
                   onChangeCard={changeCard}
+                  receipt={receipt}
+                  onChangeReceipt={changeReceipt}
                   errors={payErrors}
                 />
               ) : null}

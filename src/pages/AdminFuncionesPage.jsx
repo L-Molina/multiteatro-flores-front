@@ -311,8 +311,9 @@ export default function AdminFuncionesPage() {
     event.preventDefault()
     if (!salaForm) return
     if (salaBloqueada(salaForm.id)) return
-    if (!enteroEnRango(salaForm.capacidad, 20, 900)) {
-      setSalaError('La sala debe tener entre 20 y 900 butacas.')
+    const capacidad = Number(salaForm.filas) * Number(salaForm.columnas)
+    if (!enteroEnRango(capacidad, 20, 900)) {
+      setSalaError('La sala debe tener entre 20 y 900 butacas (filas × butacas por fila).')
       return
     }
     if (!enteroEnRango(salaForm.filas, 2, 30) || !enteroEnRango(salaForm.columnas, 2, 30)) {
@@ -323,10 +324,10 @@ export default function AdminFuncionesPage() {
       setSalaError('Las filas VIP deben ser un entero entre 0 y el total de filas.')
       return
     }
-    updateSala(salaForm.id, salaForm)
+    updateSala(salaForm.id, { ...salaForm, capacidad })
     setSalaModalOpen(false)
     showToast(
-      `Sala "${salaForm.nombre}" actualizada: ${salaForm.capacidad} butacas (${salaForm.filas} × ${salaForm.columnas}).`,
+      `Sala "${salaForm.nombre}" actualizada: ${capacidad} butacas (${salaForm.filas} × ${salaForm.columnas}).`,
     )
   }
 
@@ -351,24 +352,6 @@ export default function AdminFuncionesPage() {
                 ? `Gestionás exclusivamente las funciones y el aforo de las salas de ${user?.teatroNombre || 'tu teatro'}. Podés comprar entradas en cualquier otra sala como un usuario común.`
                 : 'Control de grilla horaria, habilitación técnica de butacas, aforos preventivos y estado de ocupación de todas las salas.'}
             </p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {esSuperadmin ? (
-                <Link
-                  to="/admin/obras"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-card border border-panel-border text-on-surface-muted hover:text-secondary text-xs font-semibold transition-colors"
-                >
-                  <span className="material-symbols-outlined text-base">edit_note</span>
-                  Obras y cartelera
-                </Link>
-              ) : null}
-              <Link
-                to="/admin/funciones"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-container border border-primary/30 text-primary text-xs font-bold"
-              >
-                <span className="material-symbols-outlined text-base">event_seat</span>
-                Funciones y aforo
-              </Link>
-            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
@@ -709,7 +692,13 @@ export default function AdminFuncionesPage() {
                         >
                           {funcion.estado}
                         </span>
-                        <div className="w-8 h-8 rounded-full bg-[#143327] flex items-center justify-center text-outline">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors ${
+                            selected
+                              ? 'bg-[#143327] border-secondary text-secondary'
+                              : 'bg-[#143327] border-[#1e4d3a] text-outline'
+                          }`}
+                        >
                           <span className="material-symbols-outlined text-[1.1rem]">
                             {selected ? 'radio_button_checked' : 'radio_button_unchecked'}
                           </span>
@@ -737,14 +726,14 @@ export default function AdminFuncionesPage() {
       <section className="w-full px-4 sm:px-8 py-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           <section className="lg:col-span-7 rounded-xl border border-panel-border bg-surface-card p-5">
-            <div className="flex items-center justify-between gap-3 mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg font-bold text-on-surface">Mapa de butacas</h2>
                 <p className="text-xs text-on-surface-muted">
                   Vista técnica del plano de sala y ocupación de la función seleccionada.
                 </p>
               </div>
-              <span className="px-2.5 py-1 rounded bg-surface-dark border border-panel-border text-xs font-semibold text-secondary text-right">
+              <span className="px-2.5 py-1 rounded bg-surface-dark border border-panel-border text-xs font-semibold text-secondary text-right whitespace-nowrap">
                 {selectedSala ? `${selectedSala.teatro} • ${selectedSala.nombre}` : 'Sin sala'}
               </span>
             </div>
@@ -1139,24 +1128,7 @@ export default function AdminFuncionesPage() {
               <input id="sala-nombre" className="admin-input" value={salaForm.nombre} readOnly />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="admin-field">
-                <label className="admin-label" htmlFor="sala-capacidad">
-                  Butacas totales
-                </label>
-                <input
-                  id="sala-capacidad"
-                  className="admin-input"
-                  type="number"
-                  min="20"
-                  max="900"
-                  value={salaForm.capacidad}
-                  onChange={(event) =>
-                    setSalaForm((prev) => ({ ...prev, capacidad: event.target.value }))
-                  }
-                  disabled={salaLocked}
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="admin-field">
                 <label className="admin-label" htmlFor="sala-filas">
                   Filas
@@ -1233,9 +1205,7 @@ export default function AdminFuncionesPage() {
 
             {!salaLocked ? (
               <p className="text-[11px] text-on-surface-muted">
-                Capacidad sugerida: {Number(salaForm.filas) * Number(salaForm.columnas)} butacas (
-                {salaForm.filas} filas × {salaForm.columnas} por fila). Las butacas VIP se asignan a
-                las primeras filas.
+                Las butacas VIP se asignan a las primeras filas.
               </p>
             ) : null}
 

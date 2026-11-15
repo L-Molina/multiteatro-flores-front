@@ -80,14 +80,6 @@ export default function ObraDetallePage() {
                   </span>
                   {obra.duracion} min
                 </span>
-                {obra.preventa ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#071510]/80 border border-[#1b4234] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-primary">
-                    <span className="material-symbols-outlined text-[0.95rem]">
-                      local_activity
-                    </span>
-                    Preventa activa
-                  </span>
-                ) : null}
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
@@ -148,12 +140,9 @@ export default function ObraDetallePage() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-12">
+      <section className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-10">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-6">
           <div>
-            <span className="text-xs font-bold uppercase tracking-widest text-secondary">
-              Programación
-            </span>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mt-1">
               Próximas funciones
             </h2>

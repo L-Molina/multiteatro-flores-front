@@ -481,6 +481,34 @@ select.select-arrow option {
   background-color: #143327;
 }
 
+/* ============================================================
+   Cinta de novedades
+   ============================================================ */
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 35s linear infinite;
+}
+
+.marquee-track:hover,
+.marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
 .toast {
   position: fixed;
   left: 50%;

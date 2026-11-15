@@ -16,15 +16,8 @@ export default function Footer() {
             </Link>
             <p className="text-xs text-on-surface-variant leading-relaxed">
               Plataforma digital que reúne la cartelera de teatros independientes de la Ciudad de
-              Buenos Aires. Elegí obra, teatro, horario y butaca exacta, y recibí tu entrada QR sin
-              imprimir nada.
-            </p>
-            <div className="flex items-center gap-2 text-secondary">
-              <span className="material-symbols-outlined text-[1.1rem]">stars</span>
-              <span className="text-[11px] font-bold uppercase tracking-wider">
-                Temporada 2026 Declarada de Interés Cultural
-              </span>
-            </div>
+              Buenos Aires.
+            </p>            
             <SocialLinks />
           </div>
 
@@ -64,10 +57,7 @@ export default function Footer() {
             <span className="text-sm font-bold text-white">Navegación y Legales</span>
             <ul className="flex flex-col gap-1.5 text-xs">
               {[
-                ['Cartelera General', '/#cartelera'],
-                ['Obras de Teatro', '/?categoria=teatro#cartelera'],
-                ['Ciclo Stand-Up', '/?categoria=standup#cartelera'],
-                ['Recitales y Conciertos', '/?categoria=conciertos#cartelera'],
+                ['Cartelera', '/#cartelera'],
                 ['Preguntas frecuentes', '/preguntas-frecuentes'],
                 ['Quiénes somos', '/quienes-somos'],
                 ['Política de privacidad', '/privacidad'],

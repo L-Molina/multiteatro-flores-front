@@ -6,7 +6,7 @@ export default function SeatMap({ asientos, tipo, seats, onToggle }) {
   })
 
   return (
-    <div className="min-w-[760px] flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1.5">
       {Object.entries(rows).map(([fila, rowSeats]) => {
         const isVip = rowSeats[0] && rowSeats[0].tipo === 'vip'
         return (

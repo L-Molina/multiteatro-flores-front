@@ -1,41 +1,54 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import useCatalog from '../hooks/useCatalog'
-import Modal from '../components/ui/Modal'
-import Toast from '../components/ui/Toast'
-import useToast from '../hooks/useToast'
-import useDocumentTitle from '../hooks/useDocumentTitle'
-import { GENEROS } from '../data/catalogo'
-import { MAX, enteroEnRango, limpiarMultilinea, limpiarTexto } from '../utils/validacion'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import useCatalog from "../hooks/useCatalog";
+import Modal from "../components/ui/Modal";
+import Toast from "../components/ui/Toast";
+import useToast from "../hooks/useToast";
+import useDocumentTitle from "../hooks/useDocumentTitle";
+import { GENEROS } from "../data/catalogo";
+import {
+  MAX,
+  enteroEnRango,
+  limpiarMultilinea,
+  limpiarTexto,
+} from "../utils/validacion";
 
 const EMPTY_FORM = {
-  titulo: '',
-  elenco: '',
-  genero: 'Teatro • Comedia',
+  titulo: "",
+  elenco: "",
+  genero: "Teatro • Comedia",
   precio: 30000,
   vip: 39000,
   duracion: 90,
-  schedule: 'Función a confirmar',
-  sinopsis: '',
-  img: '',
-  afiche: '',
+  schedule: "Función a confirmar",
+  sinopsis: "",
+  img: "",
+  afiche: "",
   publicada: true,
   preventa: true,
-}
+};
 
 function estadoObra(obra) {
-  if (!obra.publicada) return { label: 'Pausada', className: 'bg-tertiary-container text-tertiary' }
+  if (!obra.publicada)
+    return {
+      label: "Pausada",
+      className: "bg-tertiary-container text-tertiary",
+    };
   if (!obra.preventa) {
     return {
-      label: 'Sin preventa',
-      className: 'bg-surface-dark border border-panel-border text-on-surface-muted',
-    }
+      label: "Sin preventa",
+      className:
+        "bg-surface-dark border border-panel-border text-on-surface-muted",
+    };
   }
-  return { label: 'En cartelera', className: 'bg-primary-container text-primary border border-primary/30' }
+  return {
+    label: "En cartelera",
+    className: "bg-primary-container text-primary border border-primary/30",
+  };
 }
 
 export default function AdminObrasPage() {
-  useDocumentTitle('Gestión de Obras')
+  useDocumentTitle("Gestión de Obras");
   const {
     obras,
     salas,
@@ -46,78 +59,79 @@ export default function AdminObrasPage() {
     updateObra,
     deleteObra,
     formatARS,
-  } = useCatalog()
-  const navigate = useNavigate()
-  const { message, tone, showToast } = useToast()
+  } = useCatalog();
+  const navigate = useNavigate();
+  const { message, tone, showToast } = useToast();
 
-  const [search, setSearch] = useState('')
-  const [genero, setGenero] = useState('')
-  const [salaFiltro, setSalaFiltro] = useState('')
-  const [estadoFiltro, setEstadoFiltro] = useState('')
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [formError, setFormError] = useState('')
-  const [imageError, setImageError] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState(null)
-  const [selectedId, setSelectedId] = useState(null)
-  const [nowIso] = useState(() => new Date().toISOString().slice(0, 16))
+  const [search, setSearch] = useState("");
+  const [genero, setGenero] = useState("");
+  const [salaFiltro, setSalaFiltro] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [formError, setFormError] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [selectedId, setSelectedId] = useState(null);
+  const [nowIso] = useState(() => new Date().toISOString().slice(0, 16));
 
   const salaDeObra = (obra) =>
-    getSala(funciones.find((f) => f.obraId === obra.id)?.salaId)
+    getSala(funciones.find((f) => f.obraId === obra.id)?.salaId);
 
   const calcularOcupacion = (obra) => {
-    const propias = funciones.filter((funcion) => funcion.obraId === obra.id)
-    if (!propias.length) return { porcentaje: 0, vendidas: 0, total: 0 }
-    let total = 0
-    let vendidas = 0
+    const propias = funciones.filter((funcion) => funcion.obraId === obra.id);
+    if (!propias.length) return { porcentaje: 0, vendidas: 0, total: 0 };
+    let total = 0;
+    let vendidas = 0;
     propias.forEach((funcion) => {
-      const mapa = asientos(funcion.id)
-      total += mapa.length
-      vendidas += mapa.filter((asiento) => asiento.estado === 'ocupado').length
-    })
+      const mapa = asientos(funcion.id);
+      total += mapa.length;
+      vendidas += mapa.filter((asiento) => asiento.estado === "ocupado").length;
+    });
     return {
       porcentaje: total ? Math.round((vendidas / total) * 100) : 0,
       vendidas,
       total,
-    }
-  }
+    };
+  };
 
   const filtradas = obras.filter((obra) => {
-    const term = search.trim().toLowerCase()
+    const term = search.trim().toLowerCase();
     const matchTerm =
       !term ||
       `${obra.titulo} ${obra.elenco} ${obra.sinopsis} ${obra.genero}`
         .toLowerCase()
-        .includes(term)
+        .includes(term);
     const matchGenero =
       !genero ||
-      (genero === 'comedia'
-        ? obra.genero.toLowerCase().includes('comedia')
-        : obra.categoria === genero)
-    const sala = salaDeObra(obra)
-    const matchSala = !salaFiltro || String(sala?.id) === String(salaFiltro)
+      (genero === "comedia"
+        ? obra.genero.toLowerCase().includes("comedia")
+        : obra.categoria === genero);
+    const sala = salaDeObra(obra);
+    const matchSala = !salaFiltro || String(sala?.id) === String(salaFiltro);
     const matchEstado =
-      !estadoFiltro || (estadoFiltro === 'publicadas' ? obra.publicada : !obra.publicada)
-    return matchTerm && matchGenero && matchSala && matchEstado
-  })
+      !estadoFiltro ||
+      (estadoFiltro === "publicadas" ? obra.publicada : !obra.publicada);
+    return matchTerm && matchGenero && matchSala && matchEstado;
+  });
 
-  const obrasActivas = obras.filter((obra) => obra.publicada).length
+  const obrasActivas = obras.filter((obra) => obra.publicada).length;
   const funcionesFuturas = funciones.filter(
-    (funcion) => `${funcion.fecha}T${funcion.hora}` >= nowIso,
-  ).length
-  const butacasEnVenta = salas.reduce((acc, sala) => acc + sala.capacidad, 0)
+    (funcion) => `${funcion.fecha}T${funcion.hora}` >= nowIso
+  ).length;
+  const butacasEnVenta = salas.reduce((acc, sala) => acc + sala.capacidad, 0);
 
   const abrirNueva = () => {
-    setEditing(null)
-    setForm(EMPTY_FORM)
-    setFormError('')
-    setImageError('')
-    setModalOpen(true)
-  }
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setFormError("");
+    setImageError("");
+    setModalOpen(true);
+  };
 
   const abrirEdicion = (obra) => {
-    setEditing(obra)
+    setEditing(obra);
     setForm({
       titulo: obra.titulo,
       elenco: obra.elenco,
@@ -125,136 +139,151 @@ export default function AdminObrasPage() {
       precio: obra.precio,
       vip: obra.vip,
       duracion: obra.duracion,
-      schedule: obra.schedule || 'Función a confirmar',
+      schedule: obra.schedule || "Función a confirmar",
       sinopsis: obra.sinopsis,
-      img: obra.img || obra.afiche || '',
-      afiche: obra.afiche || obra.img || '',
+      img: obra.img || obra.afiche || "",
+      afiche: obra.afiche || obra.img || "",
       publicada: obra.publicada !== false,
       preventa: obra.preventa !== false,
-    })
-    setFormError('')
-    setImageError('')
-    setModalOpen(true)
-  }
+    });
+    setFormError("");
+    setImageError("");
+    setModalOpen(true);
+  };
 
   const seleccionarImagen = (event) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setImageError('El archivo debe ser una imagen (JPG, PNG, WEBP o SVG).')
-      return
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setImageError("El archivo debe ser una imagen (JPG, PNG, WEBP o SVG).");
+      return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      setImageError('La imagen no puede superar los 2 MB.')
-      return
+      setImageError("La imagen no puede superar los 2 MB.");
+      return;
     }
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = typeof reader.result === 'string' ? reader.result : ''
+      const dataUrl = typeof reader.result === "string" ? reader.result : "";
       if (!dataUrl) {
-        setImageError('No pudimos leer la imagen. Probá con otro archivo.')
-        return
+        setImageError("No pudimos leer la imagen. Probá con otro archivo.");
+        return;
       }
-      setImageError('')
-      setForm((prev) => ({ ...prev, img: dataUrl, afiche: dataUrl }))
-    }
+      setImageError("");
+      setForm((prev) => ({ ...prev, img: dataUrl, afiche: dataUrl }));
+    };
     reader.onerror = () => {
-      setImageError('No pudimos leer la imagen. Probá con otro archivo.')
-    }
-    reader.readAsDataURL(file)
-  }
+      setImageError("No pudimos leer la imagen. Probá con otro archivo.");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const guardar = (event) => {
-    event.preventDefault()
-    const titulo = limpiarTexto(form.titulo, MAX.titulo).trim()
+    event.preventDefault();
+    const titulo = limpiarTexto(form.titulo, MAX.titulo).trim();
     if (!titulo) {
-      setFormError('Ingresá el título de la obra.')
-      return
+      setFormError("Ingresá el título de la obra.");
+      return;
     }
     if (titulo.length < 3) {
-      setFormError('El título debe tener al menos 3 caracteres.')
-      return
+      setFormError("El título debe tener al menos 3 caracteres.");
+      return;
     }
-    if (!enteroEnRango(form.precio, 0, 10000000) || !enteroEnRango(form.vip, 0, 10000000)) {
-      setFormError('Las tarifas deben ser números enteros entre 0 y 10.000.000.')
-      return
+    if (
+      !enteroEnRango(form.precio, 0, 10000000) ||
+      !enteroEnRango(form.vip, 0, 10000000)
+    ) {
+      setFormError(
+        "Las tarifas deben ser números enteros entre 0 y 10.000.000."
+      );
+      return;
     }
     if (!enteroEnRango(form.duracion, 30, 600)) {
-      setFormError('La duración debe ser un número entero entre 30 y 600 minutos.')
-      return
+      setFormError(
+        "La duración debe ser un número entero entre 30 y 600 minutos."
+      );
+      return;
     }
     const payload = {
       ...form,
       titulo,
-      elenco: limpiarTexto(form.elenco, MAX.elenco).trim() || 'Compañía independiente',
+      elenco:
+        limpiarTexto(form.elenco, MAX.elenco).trim() ||
+        "Compañía independiente",
       sinopsis:
-        limpiarMultilinea(form.sinopsis, MAX.sinopsis).trim() || 'Sinopsis a confirmar.',
-      schedule: limpiarTexto(form.schedule, MAX.schedule).trim() || 'Función a confirmar',
-    }
+        limpiarMultilinea(form.sinopsis, MAX.sinopsis).trim() ||
+        "Sinopsis a confirmar.",
+      schedule:
+        limpiarTexto(form.schedule, MAX.schedule).trim() ||
+        "Función a confirmar",
+    };
     if (!payload.img) {
-      delete payload.img
-      delete payload.afiche
+      delete payload.img;
+      delete payload.afiche;
     }
     if (editing) {
-      updateObra(editing.id, payload)
-      showToast(`Obra "${payload.titulo}" actualizada correctamente.`)
+      updateObra(editing.id, payload);
+      showToast(`Obra "${payload.titulo}" actualizada correctamente.`);
     } else {
-      addObra(payload)
-      showToast(`Obra "${payload.titulo}" creada y publicada en cartelera.`)
+      addObra(payload);
+      showToast(`Obra "${payload.titulo}" creada y publicada en cartelera.`);
     }
-    setModalOpen(false)
-    setEditing(null)
-  }
+    setModalOpen(false);
+    setEditing(null);
+  };
 
   const confirmarBaja = () => {
-    if (!deleteTarget) return
-    const titulo = deleteTarget.titulo
-    deleteObra(deleteTarget.id)
-    setDeleteTarget(null)
-    setSelectedId(null)
-    showToast(`La obra "${titulo}" fue dada de baja. Se cancelaron sus funciones futuras.`)
-  }
+    if (!deleteTarget) return;
+    const titulo = deleteTarget.titulo;
+    deleteObra(deleteTarget.id);
+    setDeleteTarget(null);
+    setSelectedId(null);
+    showToast(
+      `La obra "${titulo}" fue dada de baja. Se cancelaron sus funciones futuras.`
+    );
+  };
 
   const exportar = () => {
     const rows = filtradas.map((obra) => {
-      const sala = salaDeObra(obra)
+      const sala = salaDeObra(obra);
       return [
         obra.titulo,
         obra.genero,
-        sala ? `${sala.teatro} - ${sala.nombre}` : 'Sin sala',
+        sala ? `${sala.teatro} - ${sala.nombre}` : "Sin sala",
         `${obra.precio};${obra.vip}`,
-        obra.publicada ? 'Publicada' : 'Pausada',
-      ].join(';')
-    })
-    const csv = ['Obra;Género;Sala;Platea;VIP;Estado', ...rows].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'cartelera-multiteatro.csv'
-    link.click()
-    URL.revokeObjectURL(url)
-    showToast('Informe de cartelera exportado en CSV.')
-  }
+        obra.publicada ? "Publicada" : "Pausada",
+      ].join(";");
+    });
+    const csv = ["Obra;Género;Sala;Platea;VIP;Estado", ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "cartelera-multiteatro.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast("Informe de cartelera exportado en CSV.");
+  };
 
   const limpiarFiltros = () => {
-    setSearch('')
-    setGenero('')
-    setSalaFiltro('')
-    setEstadoFiltro('')
-  }
+    setSearch("");
+    setGenero("");
+    setSalaFiltro("");
+    setEstadoFiltro("");
+  };
 
   return (
-    <div className="w-full px-4 md:px-8 py-8 flex flex-col gap-8 max-w-[1536px] mx-auto">
+    <div className="w-full px-4 md:px-8 py-8 flex flex-col gap-8 max-w-[1400px] mx-auto">
       <section className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-on-surface-muted">
-            <span className="text-secondary">Multiteatro Flores</span>
-            <span>/</span>
-            <span>Panel Administrativo</span>
-            <span>/</span>
-            <span className="text-on-surface">Gestión de Cartelera &amp; Espectáculos</span>
+          <div className="flex items-center gap-2 text-secondary">
+            <span className="material-symbols-outlined text-[1.2rem]">
+              theater_comedy
+            </span>
+            <span className="text-xs uppercase tracking-wider font-bold">
+              Modulo de Obras &amp; Catálogo
+            </span>
           </div>
         </div>
 
@@ -264,25 +293,10 @@ export default function AdminObrasPage() {
               Gestión de Cartelera &amp; Espectáculos
             </h1>
             <p className="text-sm text-on-surface-muted leading-relaxed">
-              Administración centralizada del catálogo teatral, salas asignadas, precios de
-              plateas, aforos y programación semanal en la Ciudad de Buenos Aires.
+              Administración centralizada del catálogo teatral, salas asignadas,
+              precios de plateas, aforos y programación semanal en la Ciudad de
+              Buenos Aires.
             </p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Link
-                to="/admin/obras"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-container border border-primary/30 text-primary text-xs font-bold"
-              >
-                <span className="material-symbols-outlined text-base">edit_note</span>
-                Obras y cartelera
-              </Link>
-              <Link
-                to="/admin/funciones"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-card border border-panel-border text-on-surface-muted hover:text-secondary text-xs font-semibold transition-colors"
-              >
-                <span className="material-symbols-outlined text-base">event_seat</span>
-                Funciones y aforo
-              </Link>
-            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
@@ -300,7 +314,9 @@ export default function AdminObrasPage() {
               onClick={abrirNueva}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-secondary hover:bg-secondary-hover text-[#071510] text-xs font-bold uppercase tracking-wider transition-all shadow-md"
             >
-              <span className="material-symbols-outlined text-[1.25rem]">add_circle</span>
+              <span className="material-symbols-outlined text-[1.25rem]">
+                add_circle
+              </span>
               <span>Nueva Obra / Espectáculo</span>
             </button>
           </div>
@@ -308,22 +324,55 @@ export default function AdminObrasPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            ['Obras Activas', obrasActivas, `${obras.length - obrasActivas} pausadas`, 'theater_comedy', 'text-secondary'],
-            ['Funciones Programadas', funcionesFuturas, `${funciones.length} en total`, 'calendar_today', 'text-primary'],
-            ['Butacas en Venta', butacasEnVenta.toLocaleString('es-AR'), `${salas.length} salas conectadas`, 'event_seat', 'text-secondary'],
-            ['Recaudación Estimada', '$28.450.000', '+18.4% vs mes anterior', 'payments', 'text-primary'],
+            [
+              "Obras Activas",
+              obrasActivas,
+              `${obras.length - obrasActivas} pausadas`,
+              "theater_comedy",
+              "text-secondary",
+            ],
+            [
+              "Funciones Programadas",
+              funcionesFuturas,
+              `${funciones.length} en total`,
+              "calendar_today",
+              "text-primary",
+            ],
+            [
+              "Butacas en Venta",
+              butacasEnVenta.toLocaleString("es-AR"),
+              `${salas.length} salas conectadas`,
+              "event_seat",
+              "text-secondary",
+            ],
+            [
+              "Recaudación Estimada",
+              "$28.450.000",
+              "+18.4% vs mes anterior",
+              "payments",
+              "text-primary",
+            ],
           ].map(([label, value, detail, icon, color]) => (
-            <div key={label} className="flex flex-col p-5 rounded-xl bg-surface-card border border-panel-border shadow-sm">
+            <div
+              key={label}
+              className="flex flex-col p-5 rounded-xl bg-surface-card border border-panel-border shadow-sm"
+            >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-on-surface-muted uppercase tracking-wider">
                   {label}
                 </span>
                 <span className="p-2 rounded-lg bg-surface-elevated border border-panel-border">
-                  <span className={`material-symbols-outlined text-[1.25rem] ${color}`}>{icon}</span>
+                  <span
+                    className={`material-symbols-outlined text-[1.25rem] ${color}`}
+                  >
+                    {icon}
+                  </span>
                 </span>
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-on-surface">{value}</span>
+                <span className="text-2xl font-bold text-on-surface">
+                  {value}
+                </span>
               </div>
               <p className="mt-1 text-xs text-on-surface-muted">{detail}</p>
             </div>
@@ -388,7 +437,9 @@ export default function AdminObrasPage() {
             title="Restablecer filtros"
             aria-label="Restablecer filtros"
           >
-            <span className="material-symbols-outlined text-[1.25rem]">filter_alt_off</span>
+            <span className="material-symbols-outlined text-[1.25rem]">
+              filter_alt_off
+            </span>
           </button>
         </div>
       </section>
@@ -396,7 +447,9 @@ export default function AdminObrasPage() {
       <section className="flex flex-col gap-4 w-full">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-base font-bold text-on-surface">Programación de Obras</h2>            
+            <h2 className="text-base font-bold text-on-surface">
+              Programación de Obras
+            </h2>
           </div>
         </div>
 
@@ -414,16 +467,18 @@ export default function AdminObrasPage() {
             </thead>
             <tbody className="divide-y divide-panel-border/60 text-xs">
               {filtradas.map((obra) => {
-                const sala = salaDeObra(obra)
-                const ocupacion = calcularOcupacion(obra)
-                const estado = estadoObra(obra)
-                const selected = selectedId === obra.id
+                const sala = salaDeObra(obra);
+                const ocupacion = calcularOcupacion(obra);
+                const estado = estadoObra(obra);
+                const selected = selectedId === obra.id;
                 return (
                   <tr
                     key={obra.id}
                     onClick={() => setSelectedId(obra.id)}
                     className={`transition-colors cursor-pointer ${
-                      selected ? 'is-selected-row bg-primary-container/30' : 'hover:bg-surface-elevated/40'
+                      selected
+                        ? "is-selected-row bg-primary-container/30"
+                        : "hover:bg-surface-elevated/40"
                     }`}
                   >
                     <td className="py-3.5 px-4">
@@ -460,9 +515,13 @@ export default function AdminObrasPage() {
                     </td>
                     <td className="py-3.5 px-3">
                       <div className="flex flex-col">
-                        <span className="text-on-surface font-medium">{sala?.nombre || 'Sin sala'}</span>
+                        <span className="text-on-surface font-medium">
+                          {sala?.nombre || "Sin sala"}
+                        </span>
                         <span className="text-[0.7rem] text-on-surface-muted">
-                          {sala ? `${sala.capacidad} butacas` : 'Aforo a confirmar'}
+                          {sala
+                            ? `${sala.capacidad} butacas`
+                            : "Aforo a confirmar"}
                         </span>
                       </div>
                     </td>
@@ -471,13 +530,17 @@ export default function AdminObrasPage() {
                         <span className="text-on-surface font-semibold">
                           {formatARS(obra.precio)} - {formatARS(obra.vip)}
                         </span>
-                        <span className="text-[0.7rem] text-on-surface-muted">ARS • Platea / VIP</span>
+                        <span className="text-[0.7rem] text-on-surface-muted">
+                          ARS • Platea / VIP
+                        </span>
                       </div>
                     </td>
                     <td className="py-3.5 px-3">
                       <div className="flex flex-col gap-1 w-28">
                         <div className="flex justify-between text-[0.75rem]">
-                          <span className="text-primary font-bold">{ocupacion.porcentaje}%</span>
+                          <span className="text-primary font-bold">
+                            {ocupacion.porcentaje}%
+                          </span>
                           <span className="text-on-surface-muted">
                             {ocupacion.vendidas}/{ocupacion.total}
                           </span>
@@ -489,7 +552,9 @@ export default function AdminObrasPage() {
                           />
                         </div>
                         <span className="text-[0.7rem] text-secondary font-medium">
-                          {ocupacion.total ? 'Butacas ocupadas' : 'Sin funciones'}
+                          {ocupacion.total
+                            ? "Butacas ocupadas"
+                            : "Sin funciones"}
                         </span>
                       </div>
                     </td>
@@ -498,47 +563,56 @@ export default function AdminObrasPage() {
                         <button
                           type="button"
                           onClick={(event) => {
-                            event.stopPropagation()
-                            abrirEdicion(obra)
+                            event.stopPropagation();
+                            abrirEdicion(obra);
                           }}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-dark border border-panel-border hover:bg-secondary hover:text-[#071510] text-on-surface-muted transition-colors leading-none"
                           title="Editar espectáculo"
                           aria-label={`Editar ${obra.titulo}`}
                         >
-                          <span className="material-symbols-outlined text-[1.15rem] leading-none">edit</span>
+                          <span className="material-symbols-outlined text-[1.15rem] leading-none">
+                            edit
+                          </span>
                         </button>
                         <button
                           type="button"
                           onClick={(event) => {
-                            event.stopPropagation()
-                            navigate(`/admin/funciones?obra=${obra.id}`)
+                            event.stopPropagation();
+                            navigate(`/admin/funciones?obra=${obra.id}`);
                           }}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-dark border border-panel-border hover:bg-surface-elevated text-on-surface transition-colors leading-none"
                           title="Ver funciones y plateas"
                           aria-label={`Ver funciones de ${obra.titulo}`}
                         >
-                          <span className="material-symbols-outlined text-[1.15rem] leading-none">visibility</span>
+                          <span className="material-symbols-outlined text-[1.15rem] leading-none">
+                            visibility
+                          </span>
                         </button>
                         <button
                           type="button"
                           onClick={(event) => {
-                            event.stopPropagation()
-                            setDeleteTarget(obra)
+                            event.stopPropagation();
+                            setDeleteTarget(obra);
                           }}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-dark border border-panel-border hover:bg-danger-bg text-on-surface-muted hover:text-danger transition-colors leading-none"
                           title="Dar de baja"
                           aria-label={`Dar de baja ${obra.titulo}`}
                         >
-                          <span className="material-symbols-outlined text-[1.15rem] leading-none">delete</span>
+                          <span className="material-symbols-outlined text-[1.15rem] leading-none">
+                            delete
+                          </span>
                         </button>
                       </div>
                     </td>
                   </tr>
-                )
+                );
               })}
               {!filtradas.length ? (
                 <tr>
-                  <td colSpan={6} className="py-10 px-4 text-center text-on-surface-muted text-sm">
+                  <td
+                    colSpan={6}
+                    className="py-10 px-4 text-center text-on-surface-muted text-sm"
+                  >
                     No hay obras que coincidan con los filtros seleccionados.
                   </td>
                 </tr>
@@ -551,7 +625,7 @@ export default function AdminObrasPage() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? 'Editar obra' : 'Nueva obra'}
+        title={editing ? "Editar obra" : "Nueva obra"}
         description="Completá los datos de la obra y su publicación en cartelera."
         labelledBy="obra-modal-title"
       >
@@ -577,8 +651,10 @@ export default function AdminObrasPage() {
                   htmlFor="obra-imagen"
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-secondary hover:bg-secondary-hover text-[#071510] text-[11px] font-extrabold uppercase tracking-wider cursor-pointer transition-colors"
                 >
-                  <span className="material-symbols-outlined text-base">upload</span>
-                  {form.img ? 'Cambiar imagen' : 'Subir imagen'}
+                  <span className="material-symbols-outlined text-base">
+                    upload
+                  </span>
+                  {form.img ? "Cambiar imagen" : "Subir imagen"}
                 </label>
                 <input
                   id="obra-imagen"
@@ -589,8 +665,8 @@ export default function AdminObrasPage() {
                 />
               </div>
               <p className="text-[11px] text-on-surface-muted leading-relaxed">
-                JPG, PNG, WEBP o SVG de hasta 2 MB. La vista previa se actualiza al instante y la
-                imagen se guarda junto con la obra.
+                JPG, PNG, WEBP o SVG de hasta 2 MB. La vista previa se actualiza
+                al instante y la imagen se guarda junto con la obra.
               </p>
               {imageError ? (
                 <p className="text-[11px] text-tertiary" role="alert">
@@ -609,7 +685,10 @@ export default function AdminObrasPage() {
               maxLength={MAX.titulo}
               value={form.titulo}
               onChange={(event) =>
-                setForm((prev) => ({ ...prev, titulo: limpiarTexto(event.target.value, MAX.titulo) }))
+                setForm((prev) => ({
+                  ...prev,
+                  titulo: limpiarTexto(event.target.value, MAX.titulo),
+                }))
               }
               autoFocus
             />
@@ -624,7 +703,10 @@ export default function AdminObrasPage() {
               maxLength={MAX.elenco}
               value={form.elenco}
               onChange={(event) =>
-                setForm((prev) => ({ ...prev, elenco: limpiarTexto(event.target.value, MAX.elenco) }))
+                setForm((prev) => ({
+                  ...prev,
+                  elenco: limpiarTexto(event.target.value, MAX.elenco),
+                }))
               }
             />
           </div>
@@ -636,7 +718,9 @@ export default function AdminObrasPage() {
               id="obra-genero"
               className="admin-input"
               value={form.genero}
-              onChange={(event) => setForm((prev) => ({ ...prev, genero: event.target.value }))}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, genero: event.target.value }))
+              }
             >
               {GENEROS.map((item) => (
                 <option key={item}>{item}</option>
@@ -656,7 +740,9 @@ export default function AdminObrasPage() {
                 max="10000000"
                 step="100"
                 value={form.precio}
-                onChange={(event) => setForm((prev) => ({ ...prev, precio: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, precio: event.target.value }))
+                }
               />
             </div>
             <div className="admin-field">
@@ -671,7 +757,9 @@ export default function AdminObrasPage() {
                 max="10000000"
                 step="100"
                 value={form.vip}
-                onChange={(event) => setForm((prev) => ({ ...prev, vip: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, vip: event.target.value }))
+                }
               />
             </div>
             <div className="admin-field">
@@ -686,7 +774,9 @@ export default function AdminObrasPage() {
                 max="600"
                 step="5"
                 value={form.duracion}
-                onChange={(event) => setForm((prev) => ({ ...prev, duracion: event.target.value }))}
+                onChange={(event) =>
+                  setForm((prev) => ({ ...prev, duracion: event.target.value }))
+                }
               />
             </div>
           </div>
@@ -734,7 +824,10 @@ export default function AdminObrasPage() {
                 className="accent-[#efbf69]"
                 checked={form.publicada}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, publicada: event.target.checked }))
+                  setForm((prev) => ({
+                    ...prev,
+                    publicada: event.target.checked,
+                  }))
                 }
               />
             </label>
@@ -745,18 +838,28 @@ export default function AdminObrasPage() {
                 className="accent-[#efbf69]"
                 checked={form.preventa}
                 onChange={(event) =>
-                  setForm((prev) => ({ ...prev, preventa: event.target.checked }))
+                  setForm((prev) => ({
+                    ...prev,
+                    preventa: event.target.checked,
+                  }))
                 }
               />
             </label>
           </div>
           {formError ? (
-            <p className="text-xs text-tertiary bg-tertiary-container/30 border border-tertiary/40 rounded-lg px-3 py-2" role="alert">
+            <p
+              className="text-xs text-tertiary bg-tertiary-container/30 border border-tertiary/40 rounded-lg px-3 py-2"
+              role="alert"
+            >
               {formError}
             </p>
           ) : null}
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-panel-border">
-            <button type="button" className="admin-btn-ghost" onClick={() => setModalOpen(false)}>
+            <button
+              type="button"
+              className="admin-btn-ghost"
+              onClick={() => setModalOpen(false)}
+            >
               Cancelar
             </button>
             <button type="submit" className="admin-btn-primary">
@@ -770,7 +873,9 @@ export default function AdminObrasPage() {
       <Modal
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTarget(null)}
-        title={deleteTarget ? `¿Confirmás la baja de "${deleteTarget.titulo}"?` : ''}
+        title={
+          deleteTarget ? `¿Confirmás la baja de "${deleteTarget.titulo}"?` : ""
+        }
         description="Esta acción retirará la obra de la cartelera pública y cancelará las funciones futuras programadas."
         labelledBy="delete-obra-title"
         maxWidth="max-w-xl"
@@ -778,12 +883,16 @@ export default function AdminObrasPage() {
         <div className="rounded-lg border border-tertiary/40 bg-tertiary-container/20 p-3 text-xs text-tertiary flex items-start gap-2">
           <span className="material-symbols-outlined text-base">warning</span>
           <span>
-            En el prototipo la obra y sus funciones se eliminan del estado local. No se pueden
-            recuperar.
+            En el prototipo la obra y sus funciones se eliminan del estado
+            local. No se pueden recuperar.
           </span>
         </div>
         <div className="flex items-center justify-end gap-2 pt-4 mt-2 border-t border-panel-border">
-          <button type="button" className="admin-btn-ghost" onClick={() => setDeleteTarget(null)}>
+          <button
+            type="button"
+            className="admin-btn-ghost"
+            onClick={() => setDeleteTarget(null)}
+          >
             Cancelar
           </button>
           <button
@@ -799,5 +908,5 @@ export default function AdminObrasPage() {
 
       <Toast message={message} tone={tone} />
     </div>
-  )
+  );
 }

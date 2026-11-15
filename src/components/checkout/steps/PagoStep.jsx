@@ -1,30 +1,71 @@
+import { useState } from "react";
+
 const PAYMENTS = [
   {
-    key: 'tarjeta',
-    icon: 'credit_card',
-    label: 'Tarjeta de Crédito',
-    detail: '3 cuotas sin interés',
-    detailClass: 'text-primary',
+    key: "tarjeta",
+    icon: "credit_card",
+    label: "Tarjeta de Crédito",
+    detail: "3 cuotas sin interés",
+    detailClass: "text-primary",
   },
   {
-    key: 'mercadopago',
-    icon: 'account_balance_wallet',
-    label: 'Mercado Pago',
-    detail: 'Saldo o débito directo',
-    detailClass: 'text-ivory-muted',
+    key: "mercadopago",
+    icon: "account_balance_wallet",
+    label: "Mercado Pago",
+    detail: "Saldo o débito directo",
+    detailClass: "text-ivory-muted",
   },
   {
-    key: 'transferencia',
-    icon: 'payments',
-    label: 'Transferencia',
-    detail: '5% de descuento',
-    detailClass: 'text-ivory-muted',
+    key: "transferencia",
+    icon: "payments",
+    label: "Transferencia",
+    detail: "5% de descuento",
+    detailClass: "text-ivory-muted",
   },
-]
+];
 
-export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors }) {
+export default function PagoStep({
+  pay,
+  onChangePay,
+  card,
+  onChangeCard,
+  receipt,
+  onChangeReceipt,
+  errors,
+}) {
+  const [receiptError, setReceiptError] = useState("");
+
+  const selectReceipt = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      setReceiptError("El comprobante debe ser una imagen o un PDF.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setReceiptError("El archivo no puede superar los 2 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setReceiptError("");
+      onChangeReceipt({
+        name: file.name,
+        type: file.type,
+        dataUrl: String(reader.result),
+      });
+    };
+    reader.onerror = () =>
+      setReceiptError("No pudimos leer el archivo. Probá con otro.");
+    reader.readAsDataURL(file);
+  };
+
   return (
-    <section className="wizard-step rounded-xl border border-outline-border bg-surface-dark p-5 sm:p-6 flex flex-col gap-5" aria-label="Método de pago">
+    <section
+      className="wizard-step rounded-xl border border-outline-border bg-surface-dark p-5 sm:p-6 flex flex-col gap-5"
+      aria-label="Método de pago"
+    >
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {PAYMENTS.map((payment) => (
           <button
@@ -32,16 +73,20 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
             type="button"
             onClick={() => onChangePay(payment.key)}
             aria-pressed={pay === payment.key}
-            className={`payment-tab ${pay === payment.key ? 'is-active' : ''}`}
+            className={`payment-tab ${pay === payment.key ? "is-active" : ""}`}
           >
-            <span className="material-symbols-outlined text-lg text-secondary">{payment.icon}</span>
+            <span className="material-symbols-outlined text-lg text-secondary">
+              {payment.icon}
+            </span>
             <span className="text-xs font-bold">{payment.label}</span>
-            <span className={`text-[10px] ${payment.detailClass}`}>{payment.detail}</span>
+            <span className={`text-[10px] ${payment.detailClass}`}>
+              {payment.detail}
+            </span>
           </button>
         ))}
       </div>
 
-      {pay === 'tarjeta' ? (
+      {pay === "tarjeta" ? (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5 md:col-span-2">
@@ -55,7 +100,7 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
                 <input
                   id="card-number"
                   className={`form-input input-with-icon font-mono tracking-wider ${
-                    errors.number ? 'form-error' : ''
+                    errors.number ? "form-error" : ""
                   }`}
                   type="text"
                   inputMode="numeric"
@@ -63,9 +108,13 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
                   maxLength={19}
                   autoComplete="cc-number"
                   value={card.number}
-                  onChange={(event) => onChangeCard('number', event.target.value)}
+                  onChange={(event) =>
+                    onChangeCard("number", event.target.value)
+                  }
                   aria-invalid={Boolean(errors.number)}
-                  aria-describedby={errors.number ? 'error-card-number' : undefined}
+                  aria-describedby={
+                    errors.number ? "error-card-number" : undefined
+                  }
                 />
               </div>
               {errors.number ? (
@@ -81,15 +130,17 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
               </label>
               <input
                 id="card-name"
-                className={`form-input uppercase ${errors.name ? 'form-error' : ''}`}
+                className={`form-input uppercase ${
+                  errors.name ? "form-error" : ""
+                }`}
                 maxLength={80}
                 type="text"
                 placeholder="NOMBRE APELLIDO"
                 autoComplete="cc-name"
                 value={card.name}
-                onChange={(event) => onChangeCard('name', event.target.value)}
+                onChange={(event) => onChangeCard("name", event.target.value)}
                 aria-invalid={Boolean(errors.name)}
-                aria-describedby={errors.name ? 'error-card-name' : undefined}
+                aria-describedby={errors.name ? "error-card-name" : undefined}
               />
               {errors.name ? (
                 <p id="error-card-name" className="field-error">
@@ -104,16 +155,18 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
               </label>
               <input
                 id="card-exp"
-                className={`form-input text-center ${errors.exp ? 'form-error' : ''}`}
+                className={`form-input text-center ${
+                  errors.exp ? "form-error" : ""
+                }`}
                 type="text"
                 placeholder="MM / AA"
                 inputMode="numeric"
                 autoComplete="cc-exp"
                 maxLength={7}
                 value={card.exp}
-                onChange={(event) => onChangeCard('exp', event.target.value)}
+                onChange={(event) => onChangeCard("exp", event.target.value)}
                 aria-invalid={Boolean(errors.exp)}
-                aria-describedby={errors.exp ? 'error-card-exp' : undefined}
+                aria-describedby={errors.exp ? "error-card-exp" : undefined}
               />
               {errors.exp ? (
                 <p id="error-card-exp" className="field-error">
@@ -128,16 +181,18 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
               </label>
               <input
                 id="card-cvv"
-                className={`form-input text-center ${errors.cvv ? 'form-error' : ''}`}
+                className={`form-input text-center ${
+                  errors.cvv ? "form-error" : ""
+                }`}
                 type="password"
                 placeholder="•••"
                 inputMode="numeric"
                 autoComplete="cc-csc"
                 maxLength={4}
                 value={card.cvv}
-                onChange={(event) => onChangeCard('cvv', event.target.value)}
+                onChange={(event) => onChangeCard("cvv", event.target.value)}
                 aria-invalid={Boolean(errors.cvv)}
-                aria-describedby={errors.cvv ? 'error-card-cvv' : undefined}
+                aria-describedby={errors.cvv ? "error-card-cvv" : undefined}
               />
               {errors.cvv ? (
                 <p id="error-card-cvv" className="field-error">
@@ -147,13 +202,15 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
             </div>
           </div>
           <p className="text-[11px] text-ivory-muted flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-primary text-base">shield</span>
+            <span className="material-symbols-outlined text-primary text-base">
+              shield
+            </span>
             Simulación de pago: no se realiza ningún cargo real.
           </p>
         </div>
       ) : null}
 
-      {pay === 'mercadopago' ? (
+      {pay === "mercadopago" ? (
         <div className="rounded-xl border border-outline-border bg-surface-card p-5 flex flex-col gap-2">
           <p className="text-sm font-bold text-ivory-text flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary">
@@ -162,44 +219,82 @@ export default function PagoStep({ pay, onChangePay, card, onChangeCard, errors 
             Pago con Mercado Pago
           </p>
           <p className="text-xs text-ivory-muted leading-relaxed">
-            Al confirmar, se simula la apertura del checkout de Mercado Pago. Podés pagar con saldo
-            disponible o tarjeta asociada. El prototipo no redirige a un sitio externo.
+            Al confirmar, se simula la apertura del checkout de Mercado Pago.
+            Podés pagar con saldo disponible o tarjeta asociada. El prototipo no
+            redirige a un sitio externo.
           </p>
         </div>
       ) : null}
 
-      {pay === 'transferencia' ? (
+      {pay === "transferencia" ? (
         <div className="rounded-xl border border-outline-border bg-surface-card p-5 flex flex-col gap-3">
           <p className="text-sm font-bold text-ivory-text flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary">payments</span>
-            Transferencia bancaria inmediata
+            <span className="material-symbols-outlined text-secondary">
+              payments
+            </span>
+            Transferencia Bancaria
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div className="rounded-lg bg-surface-dark border border-outline-border p-3">
               <span className="block text-[10px] uppercase tracking-wider text-ivory-muted">
                 Alias
               </span>
-              <span className="font-mono font-bold text-secondary">MULTITEATRO.FLORES</span>
+              <span className="font-mono font-bold text-secondary">
+                MULTITEATRO.FLORES
+              </span>
             </div>
             <div className="rounded-lg bg-surface-dark border border-outline-border p-3">
               <span className="block text-[10px] uppercase tracking-wider text-ivory-muted">
                 CBU
               </span>
-              <span className="font-mono font-bold text-ivory-text">0000003100012345678901</span>
+              <span className="font-mono font-bold text-ivory-text">
+                0000003100012345678901
+              </span>
             </div>
           </div>
+          <div className="flex flex-col gap-2">
+            <span className="form-label">Comprobante de transferencia</span>
+            <label
+              htmlFor="comprobante"
+              className="inline-flex w-fit items-center gap-2 px-3.5 py-2 rounded-lg border border-outline-border bg-surface-dark hover:bg-surface-elevated text-[11px] font-bold uppercase tracking-wider cursor-pointer transition-colors"
+            >
+              <span className="material-symbols-outlined text-base text-secondary">
+                upload_file
+              </span>
+              {receipt ? "Cambiar comprobante" : "Adjuntar comprobante"}
+            </label>
+            <input
+              id="comprobante"
+              type="file"
+              accept="image/*,application/pdf"
+              className="sr-only"
+              onChange={selectReceipt}
+            />
+            {receipt ? (
+              <p className="text-[11px] text-primary break-all">
+                Adjunto: {receipt.name}
+              </p>
+            ) : null}
+            {receiptError ? <p className="field-error">{receiptError}</p> : null}
+            {errors.receipt ? (
+              <p className="field-error">{errors.receipt}</p>
+            ) : null}
+          </div>
+
           <p className="text-[11px] text-ivory-muted">
-            Aplicás un 5% de descuento sobre el subtotal de entradas. La reserva queda confirmada al
-            validarse la transferencia.
+            Aplicás un 5% de descuento sobre el subtotal de entradas. La reserva
+            queda confirmada al validarse la transferencia.
           </p>
         </div>
       ) : null}
 
       <div className="flex items-start gap-2 text-[11px] text-ivory-muted">
-        <span className="material-symbols-outlined text-secondary text-base">lock</span>
-        Conexión segura simulada. Los datos ingresados no se almacenan ni se envían a ningún
-        servidor.
+        <span className="material-symbols-outlined text-secondary text-base">
+          lock
+        </span>
+        Conexión segura simulada. Los datos ingresados no se almacenan ni se
+        envían a ningún servidor.
       </div>
     </section>
-  )
+  );
 }

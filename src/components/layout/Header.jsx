@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
 import useCatalog from '../../hooks/useCatalog'
@@ -18,7 +18,9 @@ export default function Header() {
   const [query, setQuery] = useState('')
   const [menu, setMenu] = useState(null)
   const [readIds, setReadIds] = useState([])
+  const [notifPos, setNotifPos] = useState(null)
   const actionsRef = useRef(null)
+  const notifRef = useRef(null)
   const navigate = useNavigate()
 
   const novedades = useMemo(() => {
@@ -27,6 +29,29 @@ export default function Header() {
   }, [obras])
 
   const unread = novedades.filter((obra) => !readIds.includes(obra.id)).length
+
+  // Mantiene el panel de novedades anclado a la campana y dentro del viewport.
+  useLayoutEffect(() => {
+    if (menu !== 'notif') return undefined
+    const place = () => {
+      const bell = notifRef.current
+      if (!bell) return
+      const rect = bell.getBoundingClientRect()
+      const width = Math.min(320, window.innerWidth - 32)
+      const left = Math.min(
+        Math.max(16, rect.right - width),
+        window.innerWidth - width - 16,
+      )
+      setNotifPos({ left, top: rect.bottom + 8, width })
+    }
+    place()
+    window.addEventListener('resize', place)
+    window.addEventListener('scroll', place, true)
+    return () => {
+      window.removeEventListener('resize', place)
+      window.removeEventListener('scroll', place, true)
+    }
+  }, [menu])
 
   useEffect(() => {
     if (!menu) return undefined
@@ -124,6 +149,7 @@ export default function Header() {
 
           <div className="relative">
             <button
+              ref={notifRef}
               type="button"
               className="relative w-10 h-10 rounded-lg bg-[#0e241c] hover:bg-[#133025] border border-[#1b4234] flex items-center justify-center text-on-surface transition-colors"
               aria-label={
@@ -142,10 +168,11 @@ export default function Header() {
               ) : null}
             </button>
 
-            {menu === 'notif' ? (
+            {menu === 'notif' && notifPos ? (
               <div
                 id="notifications-panel"
-                className="absolute right-0 top-12 w-[min(20rem,calc(100vw-2rem))] rounded-xl border border-[#1b4234] bg-[#0c211a] shadow-2xl overflow-hidden"
+                style={{ left: notifPos.left, top: notifPos.top, width: notifPos.width }}
+                className="fixed z-[60] max-h-[70vh] overflow-y-auto break-words rounded-xl border border-[#1b4234] bg-[#0c211a] shadow-2xl"
                 role="dialog"
                 aria-label="Novedades y nuevas obras"
               >
@@ -332,7 +359,7 @@ export default function Header() {
               closeMenus()
               setOpen((prev) => !prev)
             }}
-            className="xl:hidden w-9 h-9 rounded-lg bg-[#0e241c] border border-[#1b4234] flex items-center justify-center text-on-surface"
+            className="xl:hidden w-10 h-10 rounded-lg bg-[#0e241c] border border-[#1b4234] flex items-center justify-center text-on-surface hover:bg-[#133025] transition-colors"
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={open}
             aria-controls="mobile-nav"

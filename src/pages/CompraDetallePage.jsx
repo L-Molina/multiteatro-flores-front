@@ -171,6 +171,19 @@ export default function CompraDetallePage() {
               <Dato label="Teléfono">{compra.titular.tel}</Dato>
               <Dato label="Localidad">{compra.titular.localidad}</Dato>
               <Dato label="Medio de pago">{compra.pagoLabel}</Dato>
+              {compra.comprobante ? (
+                <p className="flex justify-between gap-4 text-xs">
+                  <span className="text-on-surface-muted shrink-0">Comprobante</span>
+                  <a
+                    className="text-secondary underline text-right break-all"
+                    href={compra.comprobante.dataUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {compra.comprobante.name}
+                  </a>
+                </p>
+              ) : null}
             </div>
             <p className="text-[11px] text-on-surface-muted leading-relaxed">
               Los datos del titular deben coincidir con el documento que se presentará en la puerta
