@@ -262,6 +262,9 @@ export default function AdminFuncionesPage() {
       estado: functionForm.estado,
     }
     const obra = getObra(payload.obraId)
+    const primeraFuncion = !funciones.some(
+      (funcion) => funcion.obraId === payload.obraId,
+    )
     if (editingFuncion) {
       updateFuncion(editingFuncion.id, payload)
       showToast(
@@ -273,6 +276,25 @@ export default function AdminFuncionesPage() {
       )
     } else {
       addFuncion(payload)
+      // Si la obra no tenía fechas, avisa a las demás sesiones (bandeja real).
+      if (primeraFuncion && obra && obra.publicada !== false) {
+        const sala = getSala(payload.salaId)
+        fetch('/api/notificaciones', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            obraId: obra.id,
+            obraTitulo: obra.titulo,
+            obraImg: obra.img || obra.afiche || '',
+            genero: obra.genero,
+            fecha: payload.fecha,
+            hora: payload.hora,
+            sala: sala ? `${sala.teatro} • ${sala.nombre}` : '',
+          }),
+        }).catch(() => {
+          // Sin endpoint (build estático): la venta sigue funcionando igual.
+        })
+      }
       showToast(
         `Función programada: "${obra?.titulo || 'Obra'}" el ${formatFecha(payload.fecha)} a las ${
           payload.hora

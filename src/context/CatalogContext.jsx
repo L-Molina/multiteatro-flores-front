@@ -7,6 +7,7 @@ import {
   asientosDeFuncion,
   formatARS,
   formatFecha,
+  normalizarButaca,
   precioDe,
 } from '../data/catalogo'
 import { COMPRAS_INICIALES } from '../data/compras'
@@ -85,9 +86,25 @@ export function CatalogProvider({ children }) {
     (funcionId) => {
       const funcion = getFuncion(funcionId)
       const sala = funcion ? getSala(funcion.salaId) : null
-      return asientosDeFuncion(funcion, sala)
+      const plano = asientosDeFuncion(funcion, sala)
+      if (!funcion || !plano.length) return plano
+
+      // Las butacas de compras confirmadas (mock y nuevas) quedan ocupadas
+      // aunque se reinicie el checkout en la misma sesión.
+      const vendidas = new Set()
+      compras.forEach((compra) => {
+        if (Number(compra.funcionId) !== Number(funcion.id)) return
+        if (!Array.isArray(compra.butacas)) return
+        compra.butacas.forEach((butaca) => vendidas.add(normalizarButaca(butaca)))
+      })
+      if (!vendidas.size) return plano
+      return plano.map((asiento) =>
+        vendidas.has(normalizarButaca(asiento.id))
+          ? { ...asiento, estado: 'ocupado' }
+          : asiento,
+      )
     },
-    [getFuncion, getSala],
+    [getFuncion, getSala, compras],
   )
 
   const addObra = useCallback((payload) => {

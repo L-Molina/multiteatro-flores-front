@@ -338,20 +338,6 @@ export default function AdminObrasPage() {
               "calendar_today",
               "text-primary",
             ],
-            [
-              "Butacas en Venta",
-              butacasEnVenta.toLocaleString("es-AR"),
-              `${salas.length} salas conectadas`,
-              "event_seat",
-              "text-secondary",
-            ],
-            [
-              "Recaudación Estimada",
-              "$28.450.000",
-              "+18.4% vs mes anterior",
-              "payments",
-              "text-primary",
-            ],
           ].map(([label, value, detail, icon, color]) => (
             <div
               key={label}
@@ -453,22 +439,19 @@ export default function AdminObrasPage() {
           </div>
         </div>
 
-        <div className="w-full overflow-x-auto rounded-xl bg-surface-card border border-panel-border shadow-lg">
+        <div className="hidden lg:block w-full overflow-x-auto rounded-xl bg-surface-card border border-panel-border shadow-lg">
           <table className="w-full text-left border-collapse min-w-[820px]">
             <thead>
               <tr className="bg-surface-dark/80 border-b border-panel-border text-on-surface-muted text-[0.7rem] uppercase tracking-wider font-semibold">
                 <th className="py-3 px-4">Espectáculo &amp; Dirección</th>
                 <th className="py-3 px-3">Género</th>
-                <th className="py-3 px-3">Sala / Aforo</th>
                 <th className="py-3 px-3">Tarifas</th>
-                <th className="py-3 px-3">Ocupación</th>
                 <th className="py-3 px-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-panel-border/60 text-xs">
               {filtradas.map((obra) => {
                 const sala = salaDeObra(obra);
-                const ocupacion = calcularOcupacion(obra);
                 const estado = estadoObra(obra);
                 const selected = selectedId === obra.id;
                 return (
@@ -495,9 +478,6 @@ export default function AdminObrasPage() {
                           <span className="text-xs text-on-surface-muted truncate">
                             {obra.elenco}
                           </span>
-                          <span className="text-[0.7rem] text-secondary font-medium mt-0.5">
-                            {obra.schedule}
-                          </span>
                         </div>
                       </div>
                     </td>
@@ -515,46 +495,11 @@ export default function AdminObrasPage() {
                     </td>
                     <td className="py-3.5 px-3">
                       <div className="flex flex-col">
-                        <span className="text-on-surface font-medium">
-                          {sala?.nombre || "Sin sala"}
-                        </span>
-                        <span className="text-[0.7rem] text-on-surface-muted">
-                          {sala
-                            ? `${sala.capacidad} butacas`
-                            : "Aforo a confirmar"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col">
                         <span className="text-on-surface font-semibold">
                           {formatARS(obra.precio)} - {formatARS(obra.vip)}
                         </span>
                         <span className="text-[0.7rem] text-on-surface-muted">
                           ARS • Platea / VIP
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-3">
-                      <div className="flex flex-col gap-1 w-28">
-                        <div className="flex justify-between text-[0.75rem]">
-                          <span className="text-primary font-bold">
-                            {ocupacion.porcentaje}%
-                          </span>
-                          <span className="text-on-surface-muted">
-                            {ocupacion.vendidas}/{ocupacion.total}
-                          </span>
-                        </div>
-                        <div className="w-full bg-surface-dark rounded-full h-1.5 overflow-hidden border border-panel-border/40">
-                          <div
-                            className="bg-primary h-full rounded-full"
-                            style={{ width: `${ocupacion.porcentaje}%` }}
-                          />
-                        </div>
-                        <span className="text-[0.7rem] text-secondary font-medium">
-                          {ocupacion.total
-                            ? "Butacas ocupadas"
-                            : "Sin funciones"}
                         </span>
                       </div>
                     </td>
@@ -619,6 +564,100 @@ export default function AdminObrasPage() {
               ) : null}
             </tbody>
           </table>
+        </div>
+
+        <div className="lg:hidden flex flex-col gap-3">
+          {filtradas.map((obra) => {
+            const estado = estadoObra(obra);
+            const selected = selectedId === obra.id;
+            return (
+              <article
+                key={obra.id}
+                onClick={() => setSelectedId(obra.id)}
+                className={`rounded-xl border p-4 flex flex-col gap-3 transition-colors ${
+                  selected
+                    ? "bg-primary-container/30 border-secondary/60"
+                    : "bg-surface-card border-panel-border"
+                }`}
+              >
+                <div className="flex gap-3">
+                  <img
+                    className="w-14 h-[72px] object-cover rounded border border-panel-border shrink-0"
+                    src={obra.afiche || obra.img}
+                    alt={`Afiche de ${obra.titulo}`}
+                  />
+                  <div className="flex flex-col min-w-0 gap-1">
+                    <span className="text-sm font-semibold text-on-surface">
+                      {obra.titulo}
+                    </span>
+                    <span className="text-xs text-on-surface-muted">
+                      {obra.elenco}
+                    </span>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                      <span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded bg-surface-dark border border-panel-border text-secondary text-[0.7rem] uppercase tracking-wider font-semibold">
+                        {obra.genero}
+                      </span>
+                      <span
+                        className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[0.65rem] uppercase font-bold ${estado.className}`}
+                      >
+                        {estado.label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-3 border-t border-panel-border/60">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      abrirEdicion(obra);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-10 px-2 rounded-lg bg-surface-dark border border-panel-border hover:bg-secondary hover:text-[#071510] text-on-surface-muted text-[0.7rem] font-bold uppercase tracking-wider transition-colors"
+                    aria-label={`Editar ${obra.titulo}`}
+                  >
+                    <span className="material-symbols-outlined text-[1.1rem]">
+                      edit
+                    </span>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      navigate(`/admin/funciones?obra=${obra.id}`);
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 min-h-10 px-2 rounded-lg bg-surface-dark border border-panel-border hover:bg-surface-elevated text-on-surface text-[0.7rem] font-bold uppercase tracking-wider transition-colors"
+                    aria-label={`Ver funciones de ${obra.titulo}`}
+                  >
+                    <span className="material-symbols-outlined text-[1.1rem]">
+                      visibility
+                    </span>
+                    Funciones
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setDeleteTarget(obra);
+                    }}
+                    className="inline-flex items-center justify-center gap-1.5 min-h-10 px-3 rounded-lg bg-surface-dark border border-panel-border hover:bg-danger-bg text-on-surface-muted hover:text-danger text-[0.7rem] font-bold uppercase tracking-wider transition-colors"
+                    aria-label={`Dar de baja ${obra.titulo}`}
+                  >
+                    <span className="material-symbols-outlined text-[1.1rem]">
+                      delete
+                    </span>
+                    Baja
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+          {!filtradas.length ? (
+            <p className="py-8 px-4 text-center text-on-surface-muted text-sm rounded-xl bg-surface-card border border-panel-border">
+              No hay obras que coincidan con los filtros seleccionados.
+            </p>
+          ) : null}
         </div>
       </section>
 

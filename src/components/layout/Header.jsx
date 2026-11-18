@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth'
 import useCatalog from '../../hooks/useCatalog'
+import useNotificaciones from '../../hooks/useNotificaciones'
 import { ROLE_LABELS, ROLES } from '../../context/auth-context'
 
 const NAV = [
@@ -13,7 +14,8 @@ const NAV = [
 
 export default function Header() {
   const { user, logout } = useAuth()
-  const { obras } = useCatalog()
+  const { formatFecha } = useCatalog()
+  const notificaciones = useNotificaciones()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [menu, setMenu] = useState(null)
@@ -23,12 +25,9 @@ export default function Header() {
   const notifRef = useRef(null)
   const navigate = useNavigate()
 
-  const novedades = useMemo(() => {
-    const publicadas = obras.filter((obra) => obra.publicada !== false)
-    return [...publicadas].sort((a, b) => b.id - a.id).slice(0, 3)
-  }, [obras])
-
-  const unread = novedades.filter((obra) => !readIds.includes(obra.id)).length
+  const unread = notificaciones.filter(
+    (novedad) => !readIds.includes(novedad.id),
+  ).length
 
   // Mantiene el panel de novedades anclado a la campana y dentro del viewport.
   useLayoutEffect(() => {
@@ -182,32 +181,32 @@ export default function Header() {
                     type="button"
                     className="inline-flex items-center min-h-[28px] text-[11px] font-semibold text-secondary hover:underline disabled:text-on-surface-variant disabled:no-underline"
                     disabled={!unread}
-                    onClick={() => setReadIds(novedades.map((obra) => obra.id))}
+                    onClick={() => setReadIds(notificaciones.map((novedad) => novedad.id))}
                   >
                     Marcar leídas
                   </button>
                 </div>
                 <div className="flex flex-col">
-                  {novedades.map((obra) => {
-                    const isUnread = !readIds.includes(obra.id)
+                  {notificaciones.map((novedad) => {
+                    const isUnread = !readIds.includes(novedad.id)
                     return (
                       <Link
-                        key={obra.id}
+                        key={novedad.id}
                         className="flex items-start gap-3 px-4 py-3 hover:bg-[#133025] transition-colors border-b border-[#1b4234]/60 last:border-b-0"
-                        to={`/obras/${obra.id}`}
+                        to={`/obras/${novedad.obraId}`}
                         onClick={() => {
                           setReadIds((prev) =>
-                            prev.includes(obra.id) ? prev : [...prev, obra.id],
+                            prev.includes(novedad.id) ? prev : [...prev, novedad.id],
                           )
                           closeMenus()
                         }}
                       >
                         <span className="mt-0.5 w-9 h-9 shrink-0 rounded-lg bg-[#071510] border border-[#1b4234] flex items-center justify-center text-secondary">
-                          <span className="material-symbols-outlined text-lg">new_releases</span>
+                          <span className="material-symbols-outlined text-lg">event_seat</span>
                         </span>
                         <span className="min-w-0 flex flex-col">
                           <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                            Nueva obra en cartelera
+                            Nueva función programada
                             {isUnread ? (
                               <span
                                 className="w-1.5 h-1.5 rounded-full bg-secondary"
@@ -216,16 +215,27 @@ export default function Header() {
                             ) : null}
                           </span>
                           <span className="text-xs text-secondary font-semibold truncate">
-                            {obra.titulo}
+                            {novedad.obraTitulo}
                           </span>
-                          <span className="text-[11px] text-on-surface-variant">
-                            {obra.genero} • Ya disponible
+                          <span className="text-[11px] text-on-surface-variant truncate">
+                            {novedad.fecha
+                              ? `${formatFecha(novedad.fecha, {
+                                  weekday: 'short',
+                                  day: 'numeric',
+                                  month: 'short',
+                                })} • ${novedad.hora} hs`
+                              : 'Nueva fecha disponible'}
                           </span>
+                          {novedad.sala ? (
+                            <span className="text-[11px] text-on-surface-variant/80 truncate">
+                              {novedad.sala}
+                            </span>
+                          ) : null}
                         </span>
                       </Link>
                     )
                   })}
-                  {!novedades.length ? (
+                  {!notificaciones.length ? (
                     <p className="px-4 py-6 text-xs text-on-surface-variant text-center">
                       No hay novedades por ahora.
                     </p>

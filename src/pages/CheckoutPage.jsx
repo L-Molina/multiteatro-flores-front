@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import useCatalog from '../hooks/useCatalog'
+import useReservas from '../hooks/useReservas'
+import { normalizarButaca } from '../data/catalogo'
 import useAuth from '../hooks/useAuth'
 import Stepper from '../components/checkout/Stepper'
 import SummaryPanel from '../components/checkout/SummaryPanel'
@@ -133,7 +135,43 @@ export default function CheckoutPage() {
   const obra = getObra(obraId)
   const sala = getSala(salaId)
   const funcion = getFuncion(funcionId)
-  const asientosFuncion = funcion ? asientos(funcion.id) : []
+
+  // Aviso cuando otra sesión tomó una butaca que yo tenía elegida.
+  const handlePerdidas = useCallback(
+    (ids) => {
+      const perdidas = new Set(ids.map(normalizarButaca))
+      setSeats((prev) => prev.filter((seat) => !perdidas.has(normalizarButaca(seat))))
+      showToast(
+        'Otra persona reservó esa butaca primero. Elegí otra, por favor.',
+        'error',
+      )
+    },
+    [showToast],
+  )
+
+  const reservas = useReservas(funcion?.id ?? null, success ? [] : seats, handlePerdidas)
+
+  const asientosFuncion = useMemo(() => {
+    if (!funcion) return []
+    if (!reservas.ocupadas.size) return asientos(funcion.id)
+    return asientos(funcion.id).map((asiento) =>
+      reservas.ocupadas.has(normalizarButaca(asiento.id))
+        ? { ...asiento, estado: 'ocupado' }
+        : asiento,
+    )
+  }, [funcion, asientos, reservas.ocupadas])
+
+  // Si el polling muestra que una butaca elegida se ocupó, se deselecciona.
+  useEffect(() => {
+    if (success || !seats.length) return
+    const perdidas = seats.filter((seat) => reservas.ocupadas.has(normalizarButaca(seat)))
+    if (!perdidas.length) return
+    setSeats((prev) =>
+      prev.filter((seat) => !reservas.ocupadas.has(normalizarButaca(seat))),
+    )
+    showToast('Una butaca que habías elegido se ocupó en otra sesión.', 'error')
+  }, [reservas.ocupadas, seats, success, showToast])
+
   const unitPrice = obra && tipo ? precioDe(obra, tipo) : 0
 
   const totals = useMemo(() => {
@@ -410,6 +448,8 @@ export default function CheckoutPage() {
       email,
       usuarioEmail: user?.email || email,
     })
+    // Registra la venta para que otras sesiones vean las butacas ocupadas.
+    reservas.confirmarVenta()
     setSuccess({
       id: compra.id,
       code,

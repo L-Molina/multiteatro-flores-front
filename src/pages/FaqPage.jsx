@@ -88,7 +88,7 @@ export default function FaqPage() {
   useDocumentTitle('Preguntas Frecuentes')
   return (
     <div className="flex flex-col w-full">
-      <section className="border-b border-[#1b4234] bg-[#0e241c]">
+      <section className="#preguntas-frecuentes border-b border-[#1b4234] bg-[#0e241c]">
         <div className="max-w-4xl mx-auto px-4 sm:px-8 py-14 page-enter text-center">
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-secondary">
             Ayuda

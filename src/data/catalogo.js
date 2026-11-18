@@ -377,6 +377,11 @@ export const OBRAS_INICIALES = OBRAS_BASE.map((obra) => ({
  * Devuelve el plano de butacas de una función.
  * La ocupación es determinística para que el prototipo sea estable entre pasos.
  */
+/* Normaliza el identificador de una butaca para poder comparar formatos
+   distintos ("B1", "B-1", "b 1") entre compras, reservas y el plano. */
+export const normalizarButaca = (id) =>
+  String(id).replace(/[^a-z0-9]/gi, '').toUpperCase()
+
 export function asientosDeFuncion(funcion, sala) {
   if (!funcion || !sala) return []
   const asientos = []
