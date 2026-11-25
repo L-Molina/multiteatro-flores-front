@@ -2,14 +2,9 @@ import { Link } from "react-router-dom";
 import useCatalog from "../../hooks/useCatalog";
 
 export default function ObraCard({ obra }) {
-  const { funcionesDeObra, getSala, formatFecha, formatARS } = useCatalog();
+  const { funcionesDeObra, formatARS } = useCatalog();
   const funciones = funcionesDeObra(obra.id);
-  const proxima = funciones[0];
-  const sala = proxima ? getSala(proxima.salaId) : null;
   const ultimas = funciones.some((funcion) => funcion.estado === "Últimas");
-  const horario = proxima
-    ? `${formatFecha(proxima.fecha, { weekday: "long" })} • ${proxima.hora} hs`
-    : obra.schedule || "Función a confirmar";
 
   return (
     <article className="obra-card group flex flex-col bg-[#0e241c] border border-[#1b4234] rounded-xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-secondary/50 transition-[transform,box-shadow] transform-gpu duration-300">

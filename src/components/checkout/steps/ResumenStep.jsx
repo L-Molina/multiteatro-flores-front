@@ -10,13 +10,14 @@ export default function ResumenStep({
   holder,
   payLabel,
   totals,
+  unitPrice,
   acceptTerms,
   setAcceptTerms,
   termsError,
 }) {
   const { formatARS, formatFecha } = useCatalog()
   const tipoLabel = tipo === 'vip' ? 'VIP' : 'Estándar'
-  const unitPrice = tipo === 'vip' ? obra?.vip || 0 : obra?.precio || 0
+  const precioUnitario = Number(unitPrice || 0)
 
   return (
     <section className="wizard-step rounded-xl border border-outline-border bg-surface-dark p-5 sm:p-6 flex flex-col gap-5" aria-label="Resumen y confirmación">
@@ -28,20 +29,10 @@ export default function ResumenStep({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between rounded-lg border border-outline-border bg-surface-card p-3 text-xs">
           <span className="text-ivory-muted">
-            {totals.n} entrada(s) {tipoLabel} • {totals.n} x {formatARS(unitPrice)}
+            {totals.n} entrada(s) {tipoLabel} • {totals.n} x {formatARS(precioUnitario)}
           </span>
           <span className="font-bold text-ivory-text">{formatARS(totals.subtotal)}</span>
         </div>
-        <div className="flex items-center justify-between text-xs text-ivory-muted px-1">
-          <span>Costo de servicio ({totals.n} x {formatARS(900)})</span>
-          <span>{formatARS(totals.service)}</span>
-        </div>
-        {totals.discount ? (
-          <div className="flex items-center justify-between text-xs text-primary px-1">
-            <span>Descuento por transferencia</span>
-            <span>-{formatARS(totals.discount)}</span>
-          </div>
-        ) : null}
         <div className="flex items-center justify-between border-t border-outline-border pt-3 mt-1">
           <span className="text-sm font-bold uppercase tracking-wide">Total</span>
           <span className="text-xl font-extrabold text-secondary">{formatARS(totals.total)}</span>
@@ -68,7 +59,7 @@ export default function ResumenStep({
         <p className="flex justify-between gap-4">
           <span>Tipo de entrada</span>
           <strong className="text-ivory-text text-right">
-            {tipoLabel} — {formatARS(unitPrice)}
+            {tipoLabel} — {formatARS(precioUnitario)}
           </strong>
         </p>
         <p className="flex justify-between gap-4">

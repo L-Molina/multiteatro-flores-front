@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
+import { api } from '../api/client'
 
-/* Novedades compartidas entre sesiones.
+/* Novedades de cartelera compartidas entre sesiones.
 
-   La bandeja arranca vacía y se alimenta desde /api/notificaciones (registro en
-   memoria del dev server, ver vite.config.js). El gestor publica un aviso cuando
-   programa la primera función de una obra; el resto de las sesiones lo recibe
-   por polling, incluso en una ventana de incógnito. */
+   La bandeja arranca vacía y se alimenta desde GET /api/notificaciones del
+   backend Spring Boot. El gestor publica un aviso cuando programa la primera
+   función de una obra; las demás sesiones lo reciben por polling, incluso en
+   una ventana de incógnito. La bandeja vive en memoria del backend y se
+   reinicia cuando se reinicia Spring. */
 
-const API = '/api/notificaciones'
 const POLL_MS = 5000
 
 export default function useNotificaciones() {
@@ -17,12 +18,10 @@ export default function useNotificaciones() {
     let cancelled = false
     const load = async () => {
       try {
-        const res = await fetch(API, { cache: 'no-store' })
-        if (!res.ok) return
-        const data = await res.json()
-        if (!cancelled) setNotificaciones(data.notificaciones || [])
+        const data = await api.get('/notificaciones', { auth: false })
+        if (!cancelled) setNotificaciones(data?.notificaciones || [])
       } catch {
-        // Sin endpoint (build estático): la bandeja queda vacía.
+        // Si el backend no está disponible, la bandeja queda vacía.
       }
     }
     load()

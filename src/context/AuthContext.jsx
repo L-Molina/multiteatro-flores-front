@@ -1,122 +1,136 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { AuthContext, ROLES, ROLES_GESTION, roleLabel } from './auth-context'
+import { api, setToken } from '../api/client'
+import { mapUsuario } from '../api/mappers'
 import { normalizarEmail } from '../utils/validacion'
 
-const nextId = (list) => (list.length ? Math.max(...list.map((item) => item.id)) + 1 : 1)
+/* Sesión real contra POST /api/auth/login.
 
-/* Cuenta semilla para probar el panel sin pasar por el registro. */
-const SEED_USER = {
-  id: 1,
-  nombre: 'Lautaro',
-  email: 'superadmin@multiteatroflores.com',
-  dni: '30111222',
-  tel: '1122334455',
-  localidad: 'CABA',
-  password: 'superadmin123',
-  rol: ROLES.SUPERADMIN,
-  teatroId: null,
-  teatroNombre: null,
-  createdAt: new Date().toISOString(),
-}
+   El backend devuelve { token, usuario } y el token se manda como
+   Authorization: Bearer en cada request. La sesión vive en memoria: al
+   recargar la página hay que volver a ingresar, igual que en el backend
+   (SesionService también guarda los tokens en memoria).
 
-function sesionDe(user) {
-  return {
-    id: user.id,
-    nombre: user.nombre,
-    email: user.email,
-    dni: user.dni,
-    tel: user.tel,
-    localidad: user.localidad,
-    rol: user.rol,
-    teatroId: user.teatroId ?? null,
-    teatroNombre: user.teatroNombre ?? null,
-    since: new Date().toISOString(),
-  }
-}
+   El backend solo permite registrarse como CLIENTE. Las cuentas de gestión
+   (ADMIN / SUPERADMIN) se crean por administración o vienen en script.sql. */
 
-/* Los usuarios se mantienen en memoria. No hay llamadas al backend. */
+const TEATROS_PUBLICOS = '/teatros'
+
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useState([SEED_USER])
   const [user, setUser] = useState(null)
+  const [emailsRegistrados, setEmailsRegistrados] = useState([])
+  const perfiles = useRef({})
 
-  const emailEnUso = useCallback(
-    (email) => {
-      const cleanEmail = normalizarEmail(email)
-      return users.some((item) => item.email === cleanEmail)
-    },
-    [users],
-  )
+  const completarPerfil = useCallback(async (usuarioBackend) => {
+    const extra = perfiles.current[normalizarEmail(usuarioBackend.email)] || {}
+    const base = mapUsuario(usuarioBackend, extra)
+
+    // Un ADMIN no trae teatroId: se deriva del teatro público que lo tiene
+    // como administrador. Es un dato de presentación para el panel.
+    if (base.rol === ROLES.DUENO && base.teatroId == null) {
+      try {
+        const teatros = await api.get(TEATROS_PUBLICOS, { auth: false })
+        const propio = (teatros || []).find(
+          (teatro) => Number(teatro.admin?.id) === Number(base.id),
+        )
+        if (propio) {
+          base.teatroId = Number(propio.id)
+          base.teatroNombre = propio.nombre
+        }
+      } catch {
+        // Si falla la consulta, el panel muestra "Sin teatro" y el backend
+        // sigue aplicando sus permisos.
+      }
+    }
+
+    setUser(base)
+    return base
+  }, [])
 
   const login = useCallback(
-    (email, password) => {
+    async (email, password) => {
       const cleanEmail = normalizarEmail(email)
-      const found = users.find((item) => item.email === cleanEmail)
-
-      if (!found) {
-        return {
-          ok: false,
-          error:
-            'No encontramos una cuenta con ese correo en esta sesión. Creá tu usuario para ingresar al prototipo.',
-        }
+      try {
+        const data = await api.post(
+          '/auth/login',
+          { email: cleanEmail, password: String(password || '') },
+          { auth: false },
+        )
+        setToken(data.token)
+        const sesion = await completarPerfil(data.usuario)
+        return { ok: true, user: sesion }
+      } catch (error) {
+        const mensaje =
+          error?.status === 401
+            ? 'Correo o contraseña incorrectos. Verificá los datos e intentá de nuevo.'
+            : error?.message || 'No pudimos iniciar sesión.'
+        return { ok: false, error: mensaje }
       }
-
-      if (found.password !== String(password || '')) {
-        return {
-          ok: false,
-          error: 'La contraseña no coincide con la cuenta indicada.',
-        }
-      }
-
-      const session = sesionDe(found)
-      setUser(session)
-      return { ok: true, user: session }
     },
-    [users],
+    [completarPerfil],
   )
 
   const register = useCallback(
-    (payload) => {
+    async (payload) => {
       const cleanEmail = normalizarEmail(payload.email)
+      try {
+        const data = await api.post(
+          '/auth/register',
+          {
+            name: payload.nombre,
+            email: cleanEmail,
+            password: String(payload.password || ''),
+          },
+          { auth: false },
+        )
 
-      if (emailEnUso(cleanEmail)) {
+        perfiles.current[cleanEmail] = {
+          dni: payload.dni || '',
+          tel: payload.tel || '',
+          localidad: payload.localidad || '',
+        }
+        setEmailsRegistrados((prev) =>
+          prev.includes(cleanEmail) ? prev : [...prev, cleanEmail],
+        )
+        setToken(data.token)
+        const sesion = await completarPerfil(data.usuario)
+        return { ok: true, user: sesion }
+      } catch (error) {
+        const esDuplicado =
+          error?.status === 409 ||
+          /existe|duplicad|duplicate|unique/i.test(String(error?.message || ''))
+        const mensaje = esDuplicado
+          ? 'Ya existe una cuenta con ese correo electrónico.'
+          : error?.message || 'No pudimos crear la cuenta.'
         return {
           ok: false,
-          field: 'email',
-          error: 'Ya existe una cuenta con ese correo en esta sesión.',
+          field: esDuplicado ? 'email' : undefined,
+          error: mensaje,
         }
       }
-
-      const rol = Object.values(ROLES).includes(payload.rol) ? payload.rol : ROLES.USUARIO
-      const nuevo = {
-        id: nextId(users),
-        nombre: payload.nombre,
-        email: cleanEmail,
-        dni: payload.dni,
-        tel: payload.tel,
-        localidad: payload.localidad || '',
-        password: String(payload.password || ''),
-        rol,
-        teatroId: rol === ROLES.DUENO ? Number(payload.teatroId) || null : null,
-        teatroNombre: rol === ROLES.DUENO ? payload.teatroNombre || '' : null,
-        createdAt: new Date().toISOString(),
-      }
-
-      setUsers((prev) => [...prev, nuevo])
-      const session = sesionDe(nuevo)
-      setUser(session)
-      return { ok: true, user: session }
     },
-    [emailEnUso, users],
+    [completarPerfil],
   )
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/auth/logout')
+    } catch {
+      // El token puede haber vencido; igual se limpia la sesión local.
+    }
+    setToken(null)
     setUser(null)
   }, [])
+
+  const emailEnUso = useCallback(
+    (email) => emailsRegistrados.includes(normalizarEmail(email)),
+    [emailsRegistrados],
+  )
 
   const value = useMemo(
     () => ({
       user,
-      users,
+      users: [],
       isAuthenticated: Boolean(user),
       isSuperadmin: user?.rol === ROLES.SUPERADMIN,
       isDueno: user?.rol === ROLES.DUENO,
@@ -128,7 +142,7 @@ export function AuthProvider({ children }) {
       register,
       logout,
     }),
-    [user, users, emailEnUso, login, register, logout],
+    [user, emailEnUso, login, register, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

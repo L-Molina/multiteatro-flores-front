@@ -19,23 +19,41 @@ export default function SuccessPanel({ ticket, onDownload }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-2xl text-left">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl text-left">
         <div className="rounded-xl border border-outline-border bg-surface-card p-4">
           <span className="text-[10px] uppercase tracking-wider text-ivory-muted">
-            Código de compra
+            Compra
           </span>
-          <p className="text-sm font-bold text-secondary font-mono mt-1">{ticket.code}</p>
+          <p className="text-sm font-bold text-secondary font-mono mt-1">#{ticket.id}</p>
           <p className="text-[11px] text-ivory-muted mt-2">Total abonado</p>
           <p className="text-sm font-bold text-ivory-text">{ticket.total}</p>
-        </div>
-        <div className="rounded-lg bg-white p-2 flex items-center justify-center col-span-1">
-          <QrCanvas code={ticket.code} />
         </div>
         <div className="rounded-xl border border-outline-border bg-surface-card p-4">
           <span className="text-[10px] uppercase tracking-wider text-ivory-muted">Función</span>
           <p className="text-sm font-bold text-ivory-text mt-1">{ticket.funcion}</p>
           <p className="text-[11px] text-ivory-muted mt-0.5">{ticket.butacas}</p>
         </div>
+      </div>
+
+      {/* El backend emite un código y un QR por cada butaca. Se muestran todos
+          para que ninguna entrada quede sin su código de ingreso. */}
+      <div className="w-full max-w-2xl flex flex-wrap justify-center gap-3">
+        {(ticket.codes?.length ? ticket.codes : [{ code: ticket.code }]).map((item) => (
+          <div
+            key={item.code}
+            className="rounded-xl bg-white p-2.5 flex flex-col items-center gap-1"
+          >
+            <QrCanvas code={item.code} size={104} />
+            <span className="font-mono text-[10px] font-bold text-[#071510]">
+              {item.code}
+            </span>
+            {item.seat ? (
+              <span className="text-[9px] font-semibold text-[#071510]/70">
+                Butaca {item.seat}
+              </span>
+            ) : null}
+          </div>
+        ))}
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3 pt-2">

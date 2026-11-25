@@ -195,14 +195,33 @@ export default function CompraDetallePage() {
         <aside className="lg:col-span-4 flex flex-col gap-4 lg:sticky lg:top-24">
           <section className="rounded-xl border border-primary/40 bg-surface-dark p-5 flex flex-col items-center text-center gap-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-              Tu entrada digital
+              {cantidad === 1 ? 'Tu entrada digital' : 'Tus entradas digitales'}
             </span>
-            <div className="rounded-xl bg-white p-3">
-              <QrCanvas code={compra.codigo} size={168} />
+            <div className="w-full flex flex-col gap-4">
+              {(compra.entradas?.length
+                ? compra.entradas
+                : [{ codigo: compra.codigo, asiento: null }]
+              ).map((entrada) => (
+                <div
+                  key={entrada.codigo}
+                  className="flex flex-col items-center gap-2 rounded-lg border border-panel-border bg-surface-card p-3"
+                >
+                  <div className="rounded-xl bg-white p-2.5">
+                    <QrCanvas code={entrada.codigo} size={132} />
+                  </div>
+                  <p className="font-mono text-xs font-bold text-on-surface break-all">
+                    {entrada.codigo}
+                  </p>
+                  {entrada.asiento ? (
+                    <p className="text-[11px] text-on-surface-muted">
+                      Butaca {entrada.asiento.fila} • N° {entrada.asiento.numero}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
             </div>
-            <p className="font-mono text-sm font-bold text-on-surface">{compra.codigo}</p>
             <p className="text-[11px] text-on-surface-muted leading-relaxed">
-              Presentá este QR desde el celular al ingresar. Se valida una sola vez y no es
+              Presentá cada QR desde el celular al ingresar. Cada uno se valida una sola vez y no es
               necesario imprimirlo.
             </p>
           </section>
@@ -215,10 +234,12 @@ export default function CompraDetallePage() {
               </span>
               <span className="text-on-surface font-semibold">{formatARS(compra.subtotal)}</span>
             </div>
-            <div className="flex justify-between gap-4">
-              <span>Costo de servicio</span>
-              <span className="text-on-surface font-semibold">{formatARS(compra.servicio)}</span>
-            </div>
+            {compra.servicio > 0 ? (
+              <div className="flex justify-between gap-4">
+                <span>Costo de servicio</span>
+                <span className="text-on-surface font-semibold">{formatARS(compra.servicio)}</span>
+              </div>
+            ) : null}
             {compra.descuento > 0 ? (
               <div className="flex justify-between gap-4 text-primary">
                 <span>Descuento transferencia (-5%)</span>

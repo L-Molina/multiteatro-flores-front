@@ -37,7 +37,6 @@ import {
   emailValido,
 } from '../utils/validacion'
 
-const SERVICE_FEE = 900
 const MAX_SEATS = 6
 
 const TITLES = [
@@ -97,7 +96,9 @@ export default function CheckoutPage() {
     getSala,
     getFuncion,
     asientos,
-    precioDe,
+    cargarAsientos,
+    cargarAsientosDeFunciones,
+    funcionesDeObra,
     formatARS,
     formatFecha,
     addCompra,
@@ -129,12 +130,28 @@ export default function CheckoutPage() {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [termsError, setTermsError] = useState('')
   const [success, setSuccess] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
   const [seconds, setSeconds] = useState(12 * 60)
   const { message, tone, showToast } = useToast()
 
   const obra = getObra(obraId)
   const sala = getSala(salaId)
   const funcion = getFuncion(funcionId)
+
+  // El mapa de butacas exige sesión iniciada. Se pide al elegir obra/sala y
+  // al elegir función, así los contadores de disponibilidad son reales.
+  useEffect(() => {
+    if (!obraId || !salaId) return
+    const ids = funcionesDeObra(obraId)
+      .filter((item) => item.salaId === Number(salaId))
+      .map((item) => item.id)
+    if (ids.length) cargarAsientosDeFunciones(ids).catch(() => {})
+  }, [obraId, salaId, funcionesDeObra, cargarAsientosDeFunciones])
+
+  useEffect(() => {
+    if (!funcion?.id) return
+    cargarAsientos(funcion.id).catch(() => {})
+  }, [funcion?.id, cargarAsientos])
 
   // Aviso cuando otra sesión tomó una butaca que yo tenía elegida.
   const handlePerdidas = useCallback(
@@ -172,15 +189,33 @@ export default function CheckoutPage() {
     showToast('Una butaca que habías elegido se ocupó en otra sesión.', 'error')
   }, [reservas.ocupadas, seats, success, showToast])
 
-  const unitPrice = obra && tipo ? precioDe(obra, tipo) : 0
+  // Precios reales por tipo: salen del mapa de butacas del backend
+  // (función.precio × multiplicador de tipo_asiento). Si todavía no llegó el
+  // mapa, se usa el precio de la función como respaldo.
+  const precios = useMemo(() => {
+    const mapa = funcion ? asientos(funcion.id) : []
+    const base = Number(funcion?.precio || obra?.precio || 0)
+    const estandar = mapa.find((asiento) => asiento.tipo === 'estandar')?.precio
+    const vip = mapa.find((asiento) => asiento.tipo === 'vip')?.precio
+    return {
+      estandar: Number(estandar ?? base),
+      vip: Number(vip ?? Math.round(base * 1.3)),
+    }
+  }, [asientos, funcion, obra])
 
+  const unitPrice = tipo ? precios[tipo] || 0 : 0
+
+  // Total alineado al backend: suma de las butacas elegidas, sin servicio ni
+  // descuentos que la base de datos no cobra.
   const totals = useMemo(() => {
+    const mapa = new Map(asientosFuncion.map((asiento) => [asiento.id, asiento]))
     const n = seats.length
-    const subtotal = n * unitPrice
-    const service = n * SERVICE_FEE
-    const discount = pay === 'transferencia' ? Math.round(subtotal * 0.05) : 0
-    return { n, subtotal, service, discount, total: subtotal + service - discount }
-  }, [seats.length, unitPrice, pay])
+    const subtotal = seats.reduce(
+      (acc, id) => acc + Number(mapa.get(id)?.precio ?? unitPrice ?? 0),
+      0,
+    )
+    return { n, subtotal, service: 0, discount: 0, total: subtotal }
+  }, [seats, asientosFuncion, unitPrice])
 
   const payLabel =
     pay === 'mercadopago'
@@ -389,7 +424,8 @@ export default function CheckoutPage() {
     return true
   }
 
-  const confirmPurchase = () => {
+  const confirmPurchase = async () => {
+    if (submitting) return
     setTermsError('')
     if (!acceptTerms) {
       setTermsError('Tenés que aceptar los términos de compra para confirmar.')
@@ -408,66 +444,75 @@ export default function CheckoutPage() {
       showToast(Object.values(paymentErrorsCheck)[0], 'error')
       return
     }
+    if (!obra || !sala || !funcion || !seats.length) {
+      showToast('Faltan datos de la función o de las butacas.', 'error')
+      return
+    }
 
-    const code = `MTF-${Date.now().toString(36).toUpperCase().slice(-6)}`
-    const tipoLabel = tipo === 'vip' ? 'VIP' : 'Estándar'
     const email = normalizarEmail(holder.email)
-    const compra = addCompra({
-      codigo: code,
-      obraId: obra.id,
-      obraTitulo: obra.titulo,
-      obraImg: obra.img || obra.afiche,
-      genero: obra.genero,
-      salaId: sala.id,
-      teatro: sala.teatro,
-      salaNombre: sala.nombre,
-      direccion: sala.direccion,
-      localidad: sala.localidad,
-      funcionId: funcion.id,
-      fechaFuncion: funcion.fecha,
-      horaFuncion: funcion.hora,
-      duracion: funcion.duracion || obra.duracion,
-      tipo,
-      tipoLabel,
-      unitPrice,
-      butacas: [...seats],
-      titular: {
-        nombre: holder.nombre,
-        dni: holder.dni,
+    setSubmitting(true)
+    try {
+      const compra = await addCompra({
+        funcionId: funcion.id,
+        asientoIds: seats,
+        meta: {
+          titular: {
+            nombre: holder.nombre,
+            dni: holder.dni,
+            email,
+            tel: holder.tel,
+            localidad: holder.localidad,
+          },
+          pago: pay,
+          pagoLabel: payLabel,
+          comprobante: pay === 'transferencia' ? receipt : null,
+        },
+      })
+      // Registra la venta para que otras sesiones vean las butacas ocupadas.
+      await reservas.confirmarVenta()
+      setSuccess({
+        id: compra.id,
+        code: compra.codigo || `MTF-${compra.id}`,
+        codes: (compra.entradas || []).map((entrada) => ({
+          code: entrada.codigo,
+          seat: `${entrada.asiento?.fila || ''}${entrada.asiento?.numero || ''}`,
+        })),
         email,
-        tel: holder.tel,
-        localidad: holder.localidad,
-      },
-      pago: pay,
-      pagoLabel: payLabel,
-      comprobante: pay === 'transferencia' ? receipt : null,
-      subtotal: totals.subtotal,
-      servicio: totals.service,
-      descuento: totals.discount,
-      total: totals.total,
-      email,
-      usuarioEmail: user?.email || email,
-    })
-    // Registra la venta para que otras sesiones vean las butacas ocupadas.
-    reservas.confirmarVenta()
-    setSuccess({
-      id: compra.id,
-      code,
-      email,
-      funcion: `${obra.titulo} • ${formatFecha(funcion.fecha, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-      })} ${funcion.hora} hs`,
-      butacas: `${seats.map((seat) => seat.replace('-', ' ')).join(' • ')} — ${sala.teatro}`,
-      total: formatARS(totals.total),
-    })
+        funcion: `${obra.titulo} • ${formatFecha(funcion.fecha, {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        })} ${funcion.hora} hs`,
+        butacas: `${seats.map((seat) => seat.replace('-', ' ')).join(' • ')} — ${sala.teatro}`,
+        total: formatARS(compra.total),
+      })
+    } catch (error) {
+      const esConflicto = error?.status === 409
+      showToast(
+        esConflicto
+          ? 'Otra persona compró una de esas butacas. Actualizamos el mapa: elegí otra ubicación.'
+          : error?.message || 'No pudimos confirmar la compra.',
+        'error',
+      )
+      if (funcion?.id) {
+        const mapa = await cargarAsientos(funcion.id, { force: true }).catch(() => [])
+        if (mapa.length) {
+          setSeats((prev) =>
+            prev.filter(
+              (id) => mapa.find((asiento) => asiento.id === id)?.estado === 'disponible',
+            ),
+          )
+        }
+      }
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const onNext = () => {
-    if (success) return
+  const onNext = async () => {
+    if (success || submitting) return
     if (step === 8) {
-      confirmPurchase()
+      await confirmPurchase()
       return
     }
     if (!validateCurrent()) return
@@ -540,7 +585,7 @@ export default function CheckoutPage() {
                 />
               ) : null}
               {step === 4 && obra ? (
-                <EntradaStep obra={obra} tipo={tipo} onSelect={selectTipo} />
+                <EntradaStep obra={obra} precios={precios} tipo={tipo} onSelect={selectTipo} />
               ) : null}
               {step === 5 && funcion && tipo ? (
                 <ButacasStep
@@ -579,6 +624,7 @@ export default function CheckoutPage() {
                   holder={holder}
                   payLabel={payLabel}
                   totals={totals}
+                  unitPrice={unitPrice}
                   acceptTerms={acceptTerms}
                   setAcceptTerms={(value) => {
                     setAcceptTerms(value)
@@ -601,9 +647,15 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={onNext}
+                  disabled={submitting}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-secondary hover:bg-secondary-hover text-canvas-root text-xs font-extrabold uppercase tracking-wider transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {step === 8 ? (
+                  {submitting ? (
+                    <>
+                      <span className="material-symbols-outlined text-lg">hourglass_top</span>
+                      Procesando…
+                    </>
+                  ) : step === 8 ? (
                     <>
                       <span className="material-symbols-outlined text-lg">lock</span>
                       Confirmar y pagar

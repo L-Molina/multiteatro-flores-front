@@ -14,10 +14,10 @@ const SECCIONES = [
     id: 'datos',
     titulo: '2. Qué datos recopilamos',
     contenido: [
-      'Datos de identificación y contacto del titular de la compra: nombre y apellido, DNI, correo electrónico, teléfono y localidad.',
-      'Datos de la compra: obra, teatro, función, tipo de entrada, butacas seleccionadas, importe y estado de la operación.',
-      'Datos de pago simulados en este prototipo: número de tarjeta, titular, vencimiento y código de seguridad. En la versión final estos datos deben procesarse directamente en la pasarela de pagos y nunca almacenarse en nuestros servidores.',
-      'Datos de navegación mínimos y preferencias guardadas en el navegador, como la sesión activa del prototipo.',
+      'Datos de identificación y contacto: nombre y correo electrónico de la cuenta. El DNI, teléfono y localidad se ingresan en el checkout para completar la compra y no se persisten en la base de esta versión.',
+      'Datos de la compra: obra, teatro, función, butacas seleccionadas, importe y estado de la operación, guardados en la base del backend.',
+      'Datos de pago simulados: número de tarjeta, titular, vencimiento y código de seguridad. Quedan solo en la memoria del navegador: no se envían al servidor ni se almacenan. En la versión final deben procesarse directamente en la pasarela de pagos.',
+      'Datos de navegación mínimos y preferencias de la interfaz. La sesión activa se mantiene en memoria y se cierra al recargar la página.',
     ],
   },
   {
@@ -45,7 +45,7 @@ const SECCIONES = [
     contenido: [
       'Conservamos los datos de la compra durante el plazo necesario para la gestión administrativa y legal. Los mensajes de contacto se eliminan cuando la consulta queda resuelta.',
       'Aplicamos medidas técnicas y organizativas razonables: validación estricta de los datos de entrada, acceso restringido al panel de gestión y comunicaciones cifradas mediante HTTPS en la versión productiva.',
-      'Este prototipo académico no envía datos a un servidor real: la información que ingresás queda en la memoria del navegador y se pierde al recargar la página.',
+      'Esta versión académica guarda las cuentas, compras y entradas en una base MySQL local mediante el backend Spring Boot. La sesión se mantiene en la memoria del navegador y se cierra al recargar la página.',
     ],
   },
   {
@@ -61,8 +61,8 @@ const SECCIONES = [
     id: 'cookies',
     titulo: '7. Cookies y almacenamiento local',
     contenido: [
-      'Usamos almacenamiento local del navegador para mantener la sesión del prototipo y recordar preferencias básicas. No utilizamos cookies de publicidad ni rastreadores de terceros.',
-      'Podés borrar estos datos desde la configuración de tu navegador. Si lo hacés, se cerrará la sesión activa.',
+      'La sesión activa se mantiene en la memoria del navegador y se pierde al recargar la página. No usamos cookies de publicidad ni rastreadores de terceros.',
+      'Podés cerrar la sesión desde el menú de tu cuenta. Al recargar la página también se cierra automáticamente.',
     ],
   },
   {

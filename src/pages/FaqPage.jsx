@@ -34,15 +34,15 @@ const GRUPOS = [
     items: [
       [
         '¿Qué medios de pago aceptan?',
-        'Tarjetas de crédito y débito Visa, Mastercard y Cabal; Mercado Pago; y transferencia bancaria con alias (5% de descuento adicional). En el prototipo podés simular los tres métodos sin cargar datos reales.',
+        'Tarjetas de crédito y débito Visa, Mastercard y Cabal; Mercado Pago; y transferencia bancaria. El pago es simulado: los datos de la tarjeta no se envían al servidor.',
       ],
       [
         '¿Cómo funcionan las cuotas?',
         'Las compras con tarjeta de crédito pueden abonarse en 3 cuotas sin interés. El resumen de pago muestra el valor de cada cuota antes de confirmar.',
       ],
       [
-        '¿El costo de servicio es reembolsable?',
-        'Si la función se suspende por causas atribuibles al teatro, se devuelve el 100% del valor de las entradas y del costo de servicio. Si cancelás por decisión personal con más de 24 horas de anticipación, se reembolsa el valor de las entradas.',
+        '¿Cómo se calcula el total de la compra?',
+        'El total es la suma del precio de cada butaca seleccionada. El precio depende del tipo de entrada de la butaca (Normal o VIP) y no se agregan costos de servicio ni descuentos que la base de datos no registre.',
       ],
     ],
   },
@@ -77,8 +77,8 @@ const GRUPOS = [
         'La política completa está disponible en la página Política de Privacidad, accesible desde el pie de página y desde los formularios de login, contacto y checkout. Ahí se detallan los datos que recopilamos, su finalidad, el plazo de conservación y cómo ejercer tus derechos de acceso, rectificación y supresión.',
       ],
       [
-        '¿El prototipo guarda mis datos en un servidor?',
-        'No. Esta versión académica funciona sin backend: los datos viven en la memoria del navegador y se pierden al recargar la página. Aun así, aplicamos validación estricta y minimización de datos para que el flujo sea seguro cuando se conecte al backend real.',
+        '¿La plataforma guarda mis datos en un servidor?',
+        'Sí. Esta versión guarda la cuenta, la compra y las entradas en una base MySQL local a través del backend Spring Boot. La sesión se mantiene en memoria del navegador y se cierra al recargar la página, pero al volver a ingresar tus compras siguen asociadas a tu cuenta.',
       ],
     ],
   },

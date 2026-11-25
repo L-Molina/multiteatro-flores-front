@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useCatalog from "../hooks/useCatalog";
 import Modal from "../components/ui/Modal";
 import Toast from "../components/ui/Toast";
@@ -17,6 +17,7 @@ const EMPTY_FORM = {
   titulo: "",
   elenco: "",
   genero: "Teatro • Comedia",
+  clasificacion: "ATP",
   precio: 30000,
   vip: 39000,
   duracion: 90,
@@ -54,7 +55,7 @@ export default function AdminObrasPage() {
     salas,
     funciones,
     getSala,
-    asientos,
+    cargarAsientosDeFunciones,
     addObra,
     updateObra,
     deleteObra,
@@ -71,30 +72,20 @@ export default function AdminObrasPage() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
   const [imageError, setImageError] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [nowIso] = useState(() => new Date().toISOString().slice(0, 16));
 
+  // La ocupación real viene del mapa de butacas de cada función (el backend
+  // exige token para ese endpoint). Se carga una vez y se reutiliza.
+  useEffect(() => {
+    cargarAsientosDeFunciones(funciones.map((funcion) => funcion.id)).catch(() => {});
+  }, [funciones, cargarAsientosDeFunciones]);
+
   const salaDeObra = (obra) =>
     getSala(funciones.find((f) => f.obraId === obra.id)?.salaId);
-
-  const calcularOcupacion = (obra) => {
-    const propias = funciones.filter((funcion) => funcion.obraId === obra.id);
-    if (!propias.length) return { porcentaje: 0, vendidas: 0, total: 0 };
-    let total = 0;
-    let vendidas = 0;
-    propias.forEach((funcion) => {
-      const mapa = asientos(funcion.id);
-      total += mapa.length;
-      vendidas += mapa.filter((asiento) => asiento.estado === "ocupado").length;
-    });
-    return {
-      porcentaje: total ? Math.round((vendidas / total) * 100) : 0,
-      vendidas,
-      total,
-    };
-  };
 
   const filtradas = obras.filter((obra) => {
     const term = search.trim().toLowerCase();
@@ -120,7 +111,6 @@ export default function AdminObrasPage() {
   const funcionesFuturas = funciones.filter(
     (funcion) => `${funcion.fecha}T${funcion.hora}` >= nowIso
   ).length;
-  const butacasEnVenta = salas.reduce((acc, sala) => acc + sala.capacidad, 0);
 
   const abrirNueva = () => {
     setEditing(null);
@@ -136,6 +126,7 @@ export default function AdminObrasPage() {
       titulo: obra.titulo,
       elenco: obra.elenco,
       genero: obra.genero,
+      clasificacion: obra.clasificacion || "ATP",
       precio: obra.precio,
       vip: obra.vip,
       duracion: obra.duracion,
@@ -179,8 +170,9 @@ export default function AdminObrasPage() {
     reader.readAsDataURL(file);
   };
 
-  const guardar = (event) => {
+  const guardar = async (event) => {
     event.preventDefault();
+    if (saving) return;
     const titulo = limpiarTexto(form.titulo, MAX.titulo).trim();
     if (!titulo) {
       setFormError("Ingresá el título de la obra.");
@@ -222,26 +214,42 @@ export default function AdminObrasPage() {
       delete payload.img;
       delete payload.afiche;
     }
-    if (editing) {
-      updateObra(editing.id, payload);
-      showToast(`Obra "${payload.titulo}" actualizada correctamente.`);
-    } else {
-      addObra(payload);
-      showToast(`Obra "${payload.titulo}" creada y publicada en cartelera.`);
+    setSaving(true);
+    setFormError("");
+    try {
+      if (editing) {
+        await updateObra(editing.id, payload);
+        showToast(`Obra "${payload.titulo}" actualizada correctamente.`);
+      } else {
+        await addObra(payload);
+        showToast(`Obra "${payload.titulo}" creada y publicada en cartelera.`);
+      }
+      setModalOpen(false);
+      setEditing(null);
+    } catch (error) {
+      setFormError(error?.message || "No pudimos guardar la obra.");
+    } finally {
+      setSaving(false);
     }
-    setModalOpen(false);
-    setEditing(null);
   };
 
-  const confirmarBaja = () => {
+  const confirmarBaja = async () => {
     if (!deleteTarget) return;
     const titulo = deleteTarget.titulo;
-    deleteObra(deleteTarget.id);
-    setDeleteTarget(null);
-    setSelectedId(null);
-    showToast(
-      `La obra "${titulo}" fue dada de baja. Se cancelaron sus funciones futuras.`
-    );
+    try {
+      await deleteObra(deleteTarget.id);
+      setDeleteTarget(null);
+      setSelectedId(null);
+      showToast(
+        `La obra "${titulo}" fue dada de baja. También se eliminaron sus funciones.`
+      );
+    } catch (error) {
+      showToast(
+        error?.message ||
+          `No se pudo dar de baja "${titulo}". Verificá que no tenga entradas vendidas.`,
+        "error"
+      );
+    }
   };
 
   const exportar = () => {
@@ -451,7 +459,6 @@ export default function AdminObrasPage() {
             </thead>
             <tbody className="divide-y divide-panel-border/60 text-xs">
               {filtradas.map((obra) => {
-                const sala = salaDeObra(obra);
                 const estado = estadoObra(obra);
                 const selected = selectedId === obra.id;
                 return (
@@ -766,6 +773,23 @@ export default function AdminObrasPage() {
               ))}
             </select>
           </div>
+          <div className="admin-field">
+            <label className="admin-label" htmlFor="obra-clasificacion">
+              Clasificación
+            </label>
+            <select
+              id="obra-clasificacion"
+              className="admin-input"
+              value={form.clasificacion || "ATP"}
+              onChange={(event) =>
+                setForm((prev) => ({ ...prev, clasificacion: event.target.value }))
+              }
+            >
+              {["ATP", "+13", "+16", "+18"].map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="admin-field">
               <label className="admin-label" htmlFor="obra-precio">
@@ -901,9 +925,15 @@ export default function AdminObrasPage() {
             >
               Cancelar
             </button>
-            <button type="submit" className="admin-btn-primary">
-              <span className="material-symbols-outlined text-base">save</span>
-              Guardar obra
+            <button
+              type="submit"
+              className="admin-btn-primary"
+              disabled={saving}
+            >
+              <span className="material-symbols-outlined text-base">
+                {saving ? "hourglass_top" : "save"}
+              </span>
+              {saving ? "Guardando…" : "Guardar obra"}
             </button>
           </div>
         </form>
@@ -922,8 +952,8 @@ export default function AdminObrasPage() {
         <div className="rounded-lg border border-tertiary/40 bg-tertiary-container/20 p-3 text-xs text-tertiary flex items-start gap-2">
           <span className="material-symbols-outlined text-base">warning</span>
           <span>
-            En el prototipo la obra y sus funciones se eliminan del estado
-            local. No se pueden recuperar.
+            La obra y sus funciones se eliminan del backend. La operación solo
+            es posible si no tienen entradas vendidas. No se pueden recuperar.
           </span>
         </div>
         <div className="flex items-center justify-end gap-2 pt-4 mt-2 border-t border-panel-border">

@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import useAuth from '../hooks/useAuth'
 import useCatalog from '../hooks/useCatalog'
+import { api } from '../api/client'
 import { ROLES } from '../context/auth-context'
 import { isoFromNow } from '../data/catalogo'
 import Modal from '../components/ui/Modal'
@@ -37,6 +38,7 @@ export default function AdminFuncionesPage() {
     getSala,
     getFuncion,
     asientos,
+    cargarAsientosDeFunciones,
     addFuncion,
     updateFuncion,
     deleteFuncion,
@@ -59,10 +61,13 @@ export default function AdminFuncionesPage() {
   const [editingFuncion, setEditingFuncion] = useState(null)
   const [functionForm, setFunctionForm] = useState(null)
   const [functionError, setFunctionError] = useState('')
+  const [savingFuncion, setSavingFuncion] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [deletingFuncion, setDeletingFuncion] = useState(false)
   const [salaModalOpen, setSalaModalOpen] = useState(false)
   const [salaForm, setSalaForm] = useState(null)
   const [salaError, setSalaError] = useState('')
+  const [savingSala, setSavingSala] = useState(false)
 
   const salasEnAlcance = useMemo(() => {
     if (esDueno) {
@@ -92,6 +97,15 @@ export default function AdminFuncionesPage() {
   const selectedFuncionId = funcionesFiltradas.some((funcion) => funcion.id === selectedIdState)
     ? selectedIdState
     : funcionesFiltradas[0]?.id ?? null
+
+  // El backend exige token para el mapa de butacas. Se cargan los mapas de
+  // las funciones visibles una sola vez y se reutilizan desde el contexto.
+  useEffect(() => {
+    if (!funcionesFiltradas.length) return
+    cargarAsientosDeFunciones(funcionesFiltradas.map((funcion) => funcion.id)).catch(
+      () => {},
+    )
+  }, [funcionesFiltradas, cargarAsientosDeFunciones])
 
   const mapas = useMemo(() => {
     const result = {}
@@ -178,7 +192,6 @@ export default function AdminFuncionesPage() {
       hora: '21:00',
       duracion: obras[0]?.duracion || 90,
       precio: obras[0]?.precio || 30000,
-      estado: 'En Venta',
     })
     setFunctionError('')
     setFunctionModalOpen(true)
@@ -192,17 +205,16 @@ export default function AdminFuncionesPage() {
       salaId: funcion.salaId,
       fecha: funcion.fecha,
       hora: funcion.hora,
-      duracion: funcion.duracion || obra?.duracion || 90,
+      duracion: obra?.duracion || funcion.duracion || 90,
       precio: funcion.precio || obra?.precio || 0,
-      estado: funcion.estado,
     })
     setFunctionError('')
     setFunctionModalOpen(true)
   }
 
-  const guardarFuncion = (event) => {
+  const guardarFuncion = async (event) => {
     event.preventDefault()
-    if (!functionForm) return
+    if (!functionForm || savingFuncion) return
     if (!salasEnAlcance.some((sala) => sala.id === Number(functionForm.salaId))) {
       setFunctionError(
         esDueno
@@ -252,66 +264,84 @@ export default function AdminFuncionesPage() {
       return
     }
 
+    // El backend solo persiste fechaHora, precio, obra y sala. La duración y
+    // el estado se derivan de la obra y de la fecha en los mappers.
     const payload = {
       obraId: Number(functionForm.obraId),
       salaId: Number(functionForm.salaId),
       fecha: functionForm.fecha,
       hora: functionForm.hora,
-      duracion: Number(functionForm.duracion),
       precio: Number(functionForm.precio),
-      estado: functionForm.estado,
     }
     const obra = getObra(payload.obraId)
     const primeraFuncion = !funciones.some(
       (funcion) => funcion.obraId === payload.obraId,
     )
-    if (editingFuncion) {
-      updateFuncion(editingFuncion.id, payload)
-      showToast(
-        `Función actualizada: ${formatFecha(payload.fecha)} a las ${payload.hora} hs${
-          payload.estado === 'En Curso'
-            ? '. La sala queda bloqueada para editar aforo y layout.'
-            : '.'
-        }`,
-      )
-    } else {
-      addFuncion(payload)
-      // Si la obra no tenía fechas, avisa a las demás sesiones (bandeja real).
-      if (primeraFuncion && obra && obra.publicada !== false) {
-        const sala = getSala(payload.salaId)
-        fetch('/api/notificaciones', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            obraId: obra.id,
-            obraTitulo: obra.titulo,
-            obraImg: obra.img || obra.afiche || '',
-            genero: obra.genero,
-            fecha: payload.fecha,
-            hora: payload.hora,
-            sala: sala ? `${sala.teatro} • ${sala.nombre}` : '',
-          }),
-        }).catch(() => {
-          // Sin endpoint (build estático): la venta sigue funcionando igual.
-        })
+
+    setSavingFuncion(true)
+    setFunctionError('')
+    try {
+      if (editingFuncion) {
+        await updateFuncion(editingFuncion.id, payload)
+        showToast(
+          `Función actualizada: ${formatFecha(payload.fecha)} a las ${payload.hora} hs.`,
+        )
+      } else {
+        await addFuncion(payload)
+        // Si la obra no tenía fechas, avisa a las demás sesiones (bandeja real).
+        if (primeraFuncion && obra && obra.publicada !== false) {
+          const sala = getSala(payload.salaId)
+          try {
+            await api.post(
+              '/notificaciones',
+              {
+                obraId: obra.id,
+                obraTitulo: obra.titulo,
+                obraImg: obra.img || obra.afiche || '',
+                genero: obra.genero,
+                fecha: payload.fecha,
+                hora: payload.hora,
+                sala: sala ? `${sala.teatro} • ${sala.nombre}` : '',
+              },
+              { auth: false },
+            )
+          } catch {
+            // La función ya se creó; la novedad es un extra de la bandeja.
+          }
+        }
+        showToast(
+          `Función programada: "${obra?.titulo || 'Obra'}" el ${formatFecha(payload.fecha)} a las ${
+            payload.hora
+          } hs.`,
+        )
       }
-      showToast(
-        `Función programada: "${obra?.titulo || 'Obra'}" el ${formatFecha(payload.fecha)} a las ${
-          payload.hora
-        } hs.`,
-      )
+      setFunctionModalOpen(false)
+      setEditingFuncion(null)
+    } catch (error) {
+      setFunctionError(error?.message || 'No pudimos guardar la función.')
+    } finally {
+      setSavingFuncion(false)
     }
-    setFunctionModalOpen(false)
-    setEditingFuncion(null)
   }
 
-  const confirmarBajaFuncion = () => {
-    if (!deleteTarget) return
-    deleteFuncion(deleteTarget.id)
-    setDeleteTarget(null)
-    showToast(
-      'Función dada de baja. Las butacas disponibles volvieron al aforo de venta.',
-    )
+  const confirmarBajaFuncion = async () => {
+    if (!deleteTarget || deletingFuncion) return
+    setDeletingFuncion(true)
+    try {
+      await deleteFuncion(deleteTarget.id)
+      setDeleteTarget(null)
+      showToast(
+        'Función dada de baja. Las butacas disponibles volvieron al aforo de venta.',
+      )
+    } catch (error) {
+      showToast(
+        error?.message ||
+          'No pudimos dar de baja la función. Verificá que no tenga entradas vendidas.',
+        'error',
+      )
+    } finally {
+      setDeletingFuncion(false)
+    }
   }
 
   const abrirSala = (sala) => {
@@ -329,9 +359,9 @@ export default function AdminFuncionesPage() {
     setSalaModalOpen(true)
   }
 
-  const guardarSala = (event) => {
+  const guardarSala = async (event) => {
     event.preventDefault()
-    if (!salaForm) return
+    if (!salaForm || savingSala) return
     if (salaBloqueada(salaForm.id)) return
     const capacidad = Number(salaForm.filas) * Number(salaForm.columnas)
     if (!enteroEnRango(capacidad, 20, 900)) {
@@ -346,11 +376,23 @@ export default function AdminFuncionesPage() {
       setSalaError('Las filas VIP deben ser un entero entre 0 y el total de filas.')
       return
     }
-    updateSala(salaForm.id, { ...salaForm, capacidad })
-    setSalaModalOpen(false)
-    showToast(
-      `Sala "${salaForm.nombre}" actualizada: ${capacidad} butacas (${salaForm.filas} × ${salaForm.columnas}).`,
-    )
+
+    setSavingSala(true)
+    setSalaError('')
+    try {
+      await updateSala(salaForm.id, { ...salaForm, capacidad })
+      setSalaModalOpen(false)
+      showToast(
+        `Sala "${salaForm.nombre}" actualizada: ${capacidad} butacas (${salaForm.filas} × ${salaForm.columnas}).`,
+      )
+    } catch (error) {
+      setSalaError(
+        error?.message ||
+          'No pudimos actualizar la sala. Verificá que las butacas no tengan entradas vendidas.',
+      )
+    } finally {
+      setSavingSala(false)
+    }
   }
 
   const salaLocked = salaForm ? salaBloqueada(salaForm.id) : false
@@ -1006,20 +1048,16 @@ export default function AdminFuncionesPage() {
                 </label>
                 <input
                   id="funcion-duracion"
-                  className="admin-input"
+                  className="admin-input opacity-70"
                   type="number"
-                  min="30"
-                  max="600"
-                  step="5"
                   value={functionForm.duracion}
-                  onChange={(event) =>
-                    setFunctionForm((prev) => ({ ...prev, duracion: event.target.value }))
-                  }
+                  disabled
+                  title="La duración se toma de la obra seleccionada."
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="admin-field">
                 <label className="admin-label" htmlFor="funcion-precio">
                   Precio base ($ ARS)
@@ -1037,25 +1075,12 @@ export default function AdminFuncionesPage() {
                   }
                 />
               </div>
-              <div className="admin-field">
-                <label className="admin-label" htmlFor="funcion-estado">
-                  Estado
-                </label>
-                <select
-                  id="funcion-estado"
-                  className="admin-input"
-                  value={functionForm.estado}
-                  onChange={(event) =>
-                    setFunctionForm((prev) => ({ ...prev, estado: event.target.value }))
-                  }
-                >
-                  <option>En Venta</option>
-                  <option>Últimas</option>
-                  <option>En Curso</option>
-                  <option>Agotada</option>
-                </select>
-              </div>
             </div>
+
+            <p className="text-[11px] text-on-surface-muted -mt-1">
+              La duración se toma de la obra y el estado (En Venta / En Curso / Finalizada) se
+              calcula a partir de la fecha y hora de la función.
+            </p>
 
             <div className="rounded-lg border border-panel-border bg-surface-dark p-3 text-[11px] text-on-surface-muted flex items-center gap-2">
               <span className="material-symbols-outlined text-secondary text-base">info</span>
@@ -1080,11 +1105,15 @@ export default function AdminFuncionesPage() {
               >
                 Cancelar
               </button>
-              <button type="submit" className="admin-btn-primary h-11 justify-center sm:w-48">
+              <button type="submit" className="admin-btn-primary h-11 justify-center sm:w-48" disabled={savingFuncion}>
                 <span className="material-symbols-outlined text-base">
-                  {editingFuncion ? 'save' : 'event_available'}
+                  {savingFuncion ? 'hourglass_top' : editingFuncion ? 'save' : 'event_available'}
                 </span>
-                {editingFuncion ? 'Guardar cambios' : 'Programar función'}
+                {savingFuncion
+                  ? 'Guardando…'
+                  : editingFuncion
+                    ? 'Guardar cambios'
+                    : 'Programar función'}
               </button>
             </div>
           </form>
@@ -1106,7 +1135,8 @@ export default function AdminFuncionesPage() {
         <div className="rounded-lg border border-tertiary/40 bg-tertiary-container/20 p-3 text-xs text-tertiary flex items-start gap-2">
           <span className="material-symbols-outlined text-base">warning</span>
           <span>
-            En el prototipo la función se elimina del estado local. No se puede recuperar.
+            La función se elimina del backend. Solo es posible si no tiene
+            entradas vendidas. No se puede recuperar.
           </span>
         </div>
         <div className="flex items-center justify-end gap-2 pt-4 mt-2 border-t border-panel-border">
@@ -1116,10 +1146,13 @@ export default function AdminFuncionesPage() {
           <button
             type="button"
             onClick={confirmarBajaFuncion}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-danger-bg border border-danger/40 text-danger text-[11px] font-bold uppercase tracking-wider hover:bg-[#4a1d18] transition-colors"
+            disabled={deletingFuncion}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-danger-bg border border-danger/40 text-danger text-[11px] font-bold uppercase tracking-wider hover:bg-[#4a1d18] transition-colors disabled:opacity-50"
           >
-            <span className="material-symbols-outlined text-base">delete</span>
-            Dar de baja
+            <span className="material-symbols-outlined text-base">
+              {deletingFuncion ? 'hourglass_top' : 'delete'}
+            </span>
+            {deletingFuncion ? 'Eliminando…' : 'Dar de baja'}
           </button>
         </div>
       </Modal>
@@ -1247,11 +1280,13 @@ export default function AdminFuncionesPage() {
               <button
                 type="submit"
                 className={`admin-btn-primary ${salaLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
-                disabled={salaLocked}
+                disabled={salaLocked || savingSala}
                 title={salaLocked ? 'La sala tiene una función en curso' : 'Guardar sala'}
               >
-                <span className="material-symbols-outlined text-base">save</span>
-                Guardar sala
+                <span className="material-symbols-outlined text-base">
+                  {savingSala ? 'hourglass_top' : 'save'}
+                </span>
+                {savingSala ? 'Guardando…' : 'Guardar sala'}
               </button>
             </div>
           </form>

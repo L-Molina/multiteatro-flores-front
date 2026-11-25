@@ -1,20 +1,23 @@
 import useCatalog from '../../../hooks/useCatalog'
 
-export default function EntradaStep({ obra, tipo, onSelect }) {
+export default function EntradaStep({ obra, precios, tipo, onSelect }) {
   const { formatARS } = useCatalog()
+
+  const precioEstandar = Number(precios?.estandar ?? obra.precio)
+  const precioVip = Number(precios?.vip ?? obra.vip)
 
   const opciones = [
     {
       key: 'estandar',
       titulo: 'Entrada Estándar',
-      precio: obra.precio,
+      precio: precioEstandar,
       detalle: 'Platea central y laterales. Visibilidad completa del escenario.',
       icon: 'event_seat',
     },
     {
       key: 'vip',
       titulo: 'Entrada VIP',
-      precio: obra.vip,
+      precio: precioVip,
       detalle: 'Primeras filas y palcos laterales. Acceso prioritario a la sala.',
       icon: 'workspace_premium',
     },

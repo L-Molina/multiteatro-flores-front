@@ -9,7 +9,7 @@ export default function SummaryPanel({ obra, sala, funcion, tipo, seats, unitPri
     pay === 'tarjeta' && totals.total > 0
       ? `3 cuotas sin interés de ${formatARS(Math.round(totals.total / 3))}`
       : pay === 'transferencia'
-        ? '5% de descuento aplicado'
+        ? 'Pago por transferencia bancaria'
         : 'Pago directo'
 
   return (
@@ -102,16 +102,6 @@ export default function SummaryPanel({ obra, sala, funcion, tipo, seats, unitPri
               </span>
               <span className="text-ivory-text font-semibold">{formatARS(totals.subtotal)}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Costo de servicio digital</span>
-              <span className="text-ivory-text font-semibold">{formatARS(totals.service)}</span>
-            </div>
-            {totals.discount > 0 ? (
-              <div className="flex justify-between text-primary font-medium">
-                <span>Descuento transferencia (-5%)</span>
-                <span>-{formatARS(totals.discount)}</span>
-              </div>
-            ) : null}
             <div className="my-1 h-px bg-outline-border" />
             <div className="flex justify-between items-baseline">
               <div className="flex flex-col">

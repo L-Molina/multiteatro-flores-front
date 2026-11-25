@@ -20,13 +20,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const nextParam = params.get('next') || ''
   const safeNext =
     nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : ''
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault()
+    if (submitting) return
     setError('')
     const cleanEmail = normalizarEmail(email)
     const cleanPassword = quitarControlChars(password, { angles: false }).slice(0, 64)
@@ -42,7 +44,9 @@ export default function LoginPage() {
       setError('La contraseña debe tener entre 6 y 64 caracteres.')
       return
     }
-    const result = login(cleanEmail, cleanPassword)
+    setSubmitting(true)
+    const result = await login(cleanEmail, cleanPassword)
+    setSubmitting(false)
     if (!result.ok) {
       setError(result.error)
       return
@@ -58,8 +62,9 @@ export default function LoginPage() {
             Iniciar Sesión
           </h1>
           <p className="text-sm sm:text-base text-[#b8c7bf] leading-relaxed max-w-lg">
-            Ingresá con la cuenta que creaste en este prototipo. Según tu rol vas a poder comprar
-            entradas, consultar tu historial o gestionar la cartelera y las funciones de tus salas.
+            Ingresá con tu cuenta de Multiteatro. Según tu rol vas a poder comprar entradas,
+            consultar tu historial o gestionar la cartelera y las funciones de tus salas. La
+            sesión se valida contra el backend y se reinicia al recargar la página.
           </p>
           <ul className="flex flex-col gap-3 text-sm text-[#b8c7bf]">
             {[
@@ -88,8 +93,8 @@ export default function LoginPage() {
               ¿Todavía no tenés cuenta?
             </p>
             <p className="leading-relaxed">
-              Creá un usuario y elegí el rol con el que querés recorrer el prototipo. Podés
-              registrarte como Superadmin, Dueño de teatro o Usuario común.
+              El registro público crea una cuenta de usuario común. Las cuentas de gestión
+              (Superadmin y Dueño de teatro) se cargan desde la base de datos.
             </p>
             <Link
               className="inline-flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border border-secondary/50 text-secondary text-[11px] font-bold uppercase tracking-wider hover:bg-[#143327] transition-colors"
@@ -243,10 +248,13 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-lg bg-secondary hover:bg-secondary-hover text-[#071510] text-sm font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2"
+                  disabled={submitting}
+                  className="w-full py-3 rounded-lg bg-secondary hover:bg-secondary-hover text-[#071510] text-sm font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span className="material-symbols-outlined text-lg">login</span>
-                  Ingresar
+                  <span className="material-symbols-outlined text-lg">
+                    {submitting ? 'hourglass_top' : 'login'}
+                  </span>
+                  {submitting ? 'Ingresando…' : 'Ingresar'}
                 </button>
 
                 <p className="text-xs text-center text-[#b8c7bf]">
@@ -262,8 +270,8 @@ export default function LoginPage() {
             )}
 
             <p className="mt-5 text-[11px] leading-relaxed text-[#b8c7bf]/80 text-center">
-              Prototipo académico. No se envían datos a un servidor: las cuentas y la sesión se
-              reinician al recargar la página. Consultá nuestra{' '}
+              Prototipo académico conectado a un backend Spring Boot. La sesión se guarda en
+              memoria y se reinicia al recargar la página. Consultá nuestra{' '}
               <Link className="text-secondary hover:underline" to="/privacidad">
                 política de privacidad
               </Link>

@@ -183,8 +183,8 @@ export default function ComprasPage() {
 
       <p className="text-[11px] text-on-surface-muted flex items-start gap-1.5">
         <span className="material-symbols-outlined text-sm text-secondary shrink-0">info</span>
-        En este prototipo las compras se guardan en la memoria de la sesión y se reinician al
-        recargar la página.
+        Tus compras quedan registradas en el backend y asociadas a tu cuenta. La sesión se cierra
+        al recargar la página, pero al volver a ingresar tus entradas siguen disponibles.
       </p>
     </div>
   )

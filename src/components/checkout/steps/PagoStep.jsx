@@ -19,7 +19,7 @@ const PAYMENTS = [
     key: "transferencia",
     icon: "payments",
     label: "Transferencia",
-    detail: "5% de descuento",
+    detail: "Comprobante adjunto",
     detailClass: "text-ivory-muted",
   },
 ];
@@ -282,8 +282,8 @@ export default function PagoStep({
           </div>
 
           <p className="text-[11px] text-ivory-muted">
-            Aplicás un 5% de descuento sobre el subtotal de entradas. La reserva
-            queda confirmada al validarse la transferencia.
+            La reserva queda confirmada al validarse la transferencia. El
+            comprobante se adjunta a la compra en esta sesión.
           </p>
         </div>
       ) : null}
@@ -292,8 +292,8 @@ export default function PagoStep({
         <span className="material-symbols-outlined text-secondary text-base">
           lock
         </span>
-        Conexión segura simulada. Los datos ingresados no se almacenan ni se
-        envían a ningún servidor.
+        Los datos de la tarjeta no se envían: el pago es simulado. La compra y
+        las butacas se registran en el servidor.
       </div>
     </section>
   );
