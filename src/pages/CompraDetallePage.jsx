@@ -1,58 +1,101 @@
-import { Link, useParams } from 'react-router-dom'
-import useAuth from '../hooks/useAuth'
-import useCatalog from '../hooks/useCatalog'
-import useDocumentTitle from '../hooks/useDocumentTitle'
-import useToast from '../hooks/useToast'
-import QrCanvas from '../components/checkout/QrCanvas'
-import Toast from '../components/ui/Toast'
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { api } from "../api/client";
+import useAuth from "../hooks/useAuth";
+import useCatalog from "../hooks/useCatalog";
+import useDocumentTitle from "../hooks/useDocumentTitle";
+import useToast from "../hooks/useToast";
+import QrCanvas from "../components/checkout/QrCanvas";
+import Toast from "../components/ui/Toast";
 
 const ESTADO_CLASS = {
-  Confirmada: 'bg-primary-container text-primary border border-primary/30',
-  Usada: 'bg-surface-dark border border-panel-border text-on-surface-muted',
-  Cancelada: 'bg-tertiary-container text-tertiary border border-tertiary/30',
-}
+  Confirmada: "bg-primary-container text-primary border border-primary/30",
+  Usada: "bg-surface-dark border border-panel-border text-on-surface-muted",
+  Cancelada: "bg-tertiary-container text-tertiary border border-tertiary/30",
+};
 
 function fechaCompra(iso) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleString('es-AR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function Dato({ label, children }) {
   return (
     <p className="flex justify-between gap-4 text-xs">
       <span className="text-on-surface-muted shrink-0">{label}</span>
-      <strong className="text-on-surface text-right break-words">{children}</strong>
+      <strong className="text-on-surface text-right break-words">
+        {children}
+      </strong>
     </p>
-  )
+  );
 }
 
 export default function CompraDetallePage() {
-  const { compraId } = useParams()
-  const { user } = useAuth()
-  const { getCompra, formatARS, formatFecha } = useCatalog()
-  const compraEncontrada = getCompra(compraId)
+  const { compraId } = useParams();
+  const { user } = useAuth();
+  const { getCompra, formatARS, formatFecha } = useCatalog();
+  const compraEncontrada = getCompra(compraId);
   const compra =
     compraEncontrada && compraEncontrada.usuarioEmail === user?.email
       ? compraEncontrada
-      : null
-  useDocumentTitle(compra ? `Compra ${compra.codigo}` : 'Compra no encontrada')
-  const { message, tone, showToast } = useToast()
+      : null;
+  useDocumentTitle(compra ? `Compra ${compra.codigo}` : "Compra no encontrada");
+  const { message, tone, showToast } = useToast();
+  const [descargando, setDescargando] = useState(false);
+
+  const abrirComprobante = async () => {
+    if (!compra?.comprobante?.url || descargando) return;
+    // La ventana se abre dentro del gesto del click. Si se abriera después
+    // del await, el navegador la bloquearía como popup.
+    const ventana = window.open("", "_blank");
+    if (ventana) ventana.opener = null;
+    setDescargando(true);
+    try {
+      // El endpoint exige Bearer, por eso se descarga como blob y se abre
+      // desde una URL temporal en lugar de un <a href> directo.
+      const archivo = await api.blob(compra.comprobante.url);
+      const url = URL.createObjectURL(archivo);
+      if (ventana && !ventana.closed) {
+        ventana.location.href = url;
+      } else {
+        // Si el navegador bloqueó la ventana, se descarga el archivo.
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.download = compra.comprobante.name || "comprobante";
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      if (ventana && !ventana.closed) ventana.close();
+      showToast(
+        error?.message || "No pudimos abrir el comprobante.",
+        "error"
+      );
+    } finally {
+      setDescargando(false);
+    }
+  };
 
   if (!compra) {
     return (
       <div className="w-full max-w-3xl mx-auto px-4 sm:px-8 py-20 flex flex-col items-center text-center page-enter">
-        <span className="material-symbols-outlined text-5xl text-secondary">receipt_long</span>
+        <span className="material-symbols-outlined text-5xl text-secondary">
+          receipt_long
+        </span>
         <h1 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight">
           No encontramos esa compra
         </h1>
         <p className="mt-3 text-sm text-ivory-muted max-w-lg leading-relaxed">
-          El código puede estar incompleto o la compra ya no está disponible en esta sesión.
+          El código puede estar incompleto o la compra ya no está disponible en
+          esta sesión.
         </p>
         <Link
           className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-secondary hover:bg-secondary-hover text-[#071510] text-xs font-extrabold uppercase tracking-wider transition-colors"
@@ -62,10 +105,10 @@ export default function CompraDetallePage() {
           Volver a mis compras
         </Link>
       </div>
-    )
+    );
   }
 
-  const cantidad = compra.butacas.length
+  const cantidad = compra.butacas.length;
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-10 flex flex-col gap-6 page-enter">
@@ -74,7 +117,9 @@ export default function CompraDetallePage() {
           className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ivory-muted hover:text-secondary transition-colors"
           to="/compras"
         >
-          <span className="material-symbols-outlined text-base">arrow_back</span>
+          <span className="material-symbols-outlined text-base">
+            arrow_back
+          </span>
           Volver a mis compras
         </Link>
         <span
@@ -94,8 +139,9 @@ export default function CompraDetallePage() {
           Detalle de tu compra
         </h1>
         <p className="text-sm text-on-surface-muted">
-          Código <strong className="text-on-surface font-mono">{compra.codigo}</strong> • Compra
-          realizada el {fechaCompra(compra.creada)}
+          Código{" "}
+          <strong className="text-on-surface font-mono">{compra.codigo}</strong>{" "}
+          • Compra realizada el {fechaCompra(compra.creada)}
         </p>
       </header>
 
@@ -111,7 +157,9 @@ export default function CompraDetallePage() {
               <span className="inline-flex w-fit px-2 py-0.5 rounded bg-surface-dark border border-panel-border text-secondary text-[10px] font-bold uppercase tracking-wider">
                 {compra.genero}
               </span>
-              <h2 className="text-xl font-extrabold text-on-surface">{compra.obraTitulo}</h2>
+              <h2 className="text-xl font-extrabold text-on-surface">
+                {compra.obraTitulo}
+              </h2>
               <p className="text-sm font-semibold text-secondary">
                 {formatFecha(compra.fechaFuncion)} • {compra.horaFuncion} hs
               </p>
@@ -123,15 +171,23 @@ export default function CompraDetallePage() {
                   <span className="block text-[10px] uppercase tracking-wider text-on-surface-muted font-bold">
                     Teatro
                   </span>
-                  <span className="block text-on-surface mt-0.5">{compra.teatro}</span>
-                  <span className="block text-on-surface-muted">{compra.salaNombre}</span>
+                  <span className="block text-on-surface mt-0.5">
+                    {compra.teatro}
+                  </span>
+                  <span className="block text-on-surface-muted">
+                    {compra.salaNombre}
+                  </span>
                 </div>
                 <div className="rounded-lg border border-panel-border bg-surface-dark px-3 py-2">
                   <span className="block text-[10px] uppercase tracking-wider text-on-surface-muted font-bold">
                     Dirección
                   </span>
-                  <span className="block text-on-surface mt-0.5">{compra.direccion}</span>
-                  <span className="block text-on-surface-muted">{compra.localidad}</span>
+                  <span className="block text-on-surface mt-0.5">
+                    {compra.direccion}
+                  </span>
+                  <span className="block text-on-surface-muted">
+                    {compra.localidad}
+                  </span>
                 </div>
               </div>
             </div>
@@ -139,8 +195,12 @@ export default function CompraDetallePage() {
 
           <section className="rounded-xl border border-panel-border bg-surface-card p-5 flex flex-col gap-4">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-secondary">event_seat</span>
-              <h2 className="text-sm font-bold text-on-surface">Ubicaciones asignadas</h2>
+              <span className="material-symbols-outlined text-secondary">
+                event_seat
+              </span>
+              <h2 className="text-sm font-bold text-on-surface">
+                Ubicaciones asignadas
+              </h2>
             </div>
             <div className="flex flex-wrap gap-2">
               {compra.butacas.map((butaca) => (
@@ -148,46 +208,58 @@ export default function CompraDetallePage() {
                   key={butaca}
                   className="inline-flex items-center gap-2 rounded-lg border border-secondary/40 bg-secondary/10 px-3 py-2 text-xs font-bold text-secondary"
                 >
-                  <span className="material-symbols-outlined text-base">chair</span>
-                  Butaca {butaca.replace('-', ' • N° ')}
+                  <span className="material-symbols-outlined text-base">
+                    chair
+                  </span>
+                  Butaca {butaca.replace("-", " • N° ")}
                 </span>
               ))}
             </div>
             <p className="text-[11px] text-on-surface-muted leading-relaxed">
-              {cantidad} {cantidad === 1 ? 'entrada' : 'entradas'} de tipo {compra.tipoLabel}. Las
-              butacas son numeradas y quedan reservadas a nombre del titular.
+              {cantidad} {cantidad === 1 ? "entrada" : "entradas"} de tipo{" "}
+              {compra.tipoLabel}. Las butacas son numeradas y quedan reservadas
+              a nombre del titular.
             </p>
           </section>
 
           <section className="rounded-xl border border-panel-border bg-surface-card p-5 flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-secondary">badge</span>
-              <h2 className="text-sm font-bold text-on-surface">Datos del titular</h2>
+              <span className="material-symbols-outlined text-secondary">
+                badge
+              </span>
+              <h2 className="text-sm font-bold text-on-surface">
+                Datos del titular
+              </h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-              <Dato label="Nombre y apellido">{compra.titular.nombre}</Dato>
-              <Dato label="DNI">{compra.titular.dni}</Dato>
-              <Dato label="Correo">{compra.titular.email}</Dato>
-              <Dato label="Teléfono">{compra.titular.tel}</Dato>
-              <Dato label="Localidad">{compra.titular.localidad}</Dato>
-              <Dato label="Medio de pago">{compra.pagoLabel}</Dato>
+              <Dato label="Nombre y apellido">
+                {compra.titular.nombre || "—"}
+              </Dato>
+              <Dato label="DNI">{compra.titular.dni || "—"}</Dato>
+              <Dato label="Correo">{compra.titular.email || "—"}</Dato>
+              <Dato label="Teléfono">{compra.titular.tel || "—"}</Dato>
+              <Dato label="Localidad">{compra.titular.localidad || "—"}</Dato>
+              <Dato label="Medio de pago">{compra.pagoLabel || "—"}</Dato>
               {compra.comprobante ? (
                 <p className="flex justify-between gap-4 text-xs">
-                  <span className="text-on-surface-muted shrink-0">Comprobante</span>
-                  <a
-                    className="text-secondary underline text-right break-all"
-                    href={compra.comprobante.dataUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <span className="text-on-surface-muted shrink-0">
+                    Comprobante
+                  </span>
+                  <button
+                    type="button"
+                    onClick={abrirComprobante}
+                    disabled={descargando}
+                    className="text-secondary underline text-right break-all disabled:opacity-60"
                   >
-                    {compra.comprobante.name}
-                  </a>
+                    {descargando ? "Abriendo…" : compra.comprobante.name}
+                  </button>
                 </p>
               ) : null}
             </div>
             <p className="text-[11px] text-on-surface-muted leading-relaxed">
-              Los datos del titular deben coincidir con el documento que se presentará en la puerta
-              si el personal de sala lo solicita. El QR se envía al correo indicado.
+              Los datos del titular deben coincidir con el documento que se
+              presentará en la puerta si el personal de sala lo solicita. El QR
+              se envía al correo indicado.
             </p>
           </section>
         </div>
@@ -195,7 +267,7 @@ export default function CompraDetallePage() {
         <aside className="lg:col-span-4 flex flex-col gap-4 lg:sticky lg:top-24">
           <section className="rounded-xl border border-primary/40 bg-surface-dark p-5 flex flex-col items-center text-center gap-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-secondary">
-              {cantidad === 1 ? 'Tu entrada digital' : 'Tus entradas digitales'}
+              {cantidad === 1 ? "Tu entrada digital" : "Tus entradas digitales"}
             </span>
             <div className="w-full flex flex-col gap-4">
               {(compra.entradas?.length
@@ -214,36 +286,45 @@ export default function CompraDetallePage() {
                   </p>
                   {entrada.asiento ? (
                     <p className="text-[11px] text-on-surface-muted">
-                      Butaca {entrada.asiento.fila} • N° {entrada.asiento.numero}
+                      Butaca {entrada.asiento.fila} • N°{" "}
+                      {entrada.asiento.numero}
                     </p>
                   ) : null}
                 </div>
               ))}
             </div>
             <p className="text-[11px] text-on-surface-muted leading-relaxed">
-              Presentá cada QR desde el celular al ingresar. Cada uno se valida una sola vez y no es
-              necesario imprimirlo.
+              Presentá cada QR desde el celular al ingresar. Cada uno se valida
+              una sola vez y no es necesario imprimirlo.
             </p>
           </section>
 
           <section className="rounded-xl border border-panel-border bg-surface-card p-5 flex flex-col gap-2.5 text-xs text-on-surface-muted">
-            <h2 className="text-sm font-bold text-on-surface mb-1">Resumen de pago</h2>
+            <h2 className="text-sm font-bold text-on-surface mb-1">
+              Resumen de pago
+            </h2>
             <div className="flex justify-between gap-4">
               <span>
                 Entradas ({cantidad} x {formatARS(compra.unitPrice || 0)})
               </span>
-              <span className="text-on-surface font-semibold">{formatARS(compra.subtotal)}</span>
+              <span className="text-on-surface font-semibold">
+                {formatARS(compra.subtotal)}
+              </span>
             </div>
             {compra.servicio > 0 ? (
               <div className="flex justify-between gap-4">
                 <span>Costo de servicio</span>
-                <span className="text-on-surface font-semibold">{formatARS(compra.servicio)}</span>
+                <span className="text-on-surface font-semibold">
+                  {formatARS(compra.servicio)}
+                </span>
               </div>
             ) : null}
             {compra.descuento > 0 ? (
               <div className="flex justify-between gap-4 text-primary">
                 <span>Descuento transferencia (-5%)</span>
-                <span className="font-semibold">-{formatARS(compra.descuento)}</span>
+                <span className="font-semibold">
+                  -{formatARS(compra.descuento)}
+                </span>
               </div>
             ) : null}
             <div className="h-px bg-panel-border my-1" />
@@ -261,12 +342,14 @@ export default function CompraDetallePage() {
             type="button"
             onClick={() =>
               showToast(
-                'Comprobante simulado generado. En la versión final se descarga el PDF con el QR.',
+                "Comprobante simulado generado. En la versión final se descarga el PDF con el QR."
               )
             }
             className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-panel-border bg-surface-card hover:bg-surface-elevated text-xs font-bold uppercase tracking-wider transition-colors"
           >
-            <span className="material-symbols-outlined text-base text-secondary">download</span>
+            <span className="material-symbols-outlined text-base text-secondary">
+              download
+            </span>
             Descargar comprobante
           </button>
         </aside>
@@ -274,5 +357,5 @@ export default function CompraDetallePage() {
 
       <Toast message={message} tone={tone} />
     </div>
-  )
+  );
 }

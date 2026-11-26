@@ -468,6 +468,10 @@ export default function CheckoutPage() {
           comprobante: pay === 'transferencia' ? receipt : null,
         },
       })
+      // La compra ya está confirmada aunque el comprobante no haya subido.
+      if (compra.comprobanteError) {
+        showToast(compra.comprobanteError, 'error')
+      }
       // Registra la venta para que otras sesiones vean las butacas ocupadas.
       await reservas.confirmarVenta()
       setSuccess({
@@ -477,7 +481,7 @@ export default function CheckoutPage() {
           code: entrada.codigo,
           seat: `${entrada.asiento?.fila || ''}${entrada.asiento?.numero || ''}`,
         })),
-        email,
+        email: compra.titular?.email || email,
         funcion: `${obra.titulo} • ${formatFecha(funcion.fecha, {
           weekday: 'short',
           day: 'numeric',

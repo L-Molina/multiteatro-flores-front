@@ -16,7 +16,12 @@ en la base MySQL `multiteatro_db`.
   bandeja de novedades (`/api/notificaciones`). Se reinician al reiniciar Spring.
 - **Solo en el frontend:** imagen, elenco, género comercial y flags de publicación se completan
   desde `src/data/catalogo.js` porque la base no los modela. El DNI, teléfono, localidad del
-  titular y el comprobante de transferencia se guardan en memoria para mostrarlos en esta sesión.
+  titular, el método de pago y la URL del comprobante se persisten en la tabla `compra`.
+- **Comprobante de transferencia:** el archivo se sube a `uploads/comprobantes` (configurable con
+  `app.uploads.comprobantes-dir`) y la compra guarda su URL y nombre original. Se descarga por
+  `GET /api/compras/{id}/comprobante` con token; no se sirve como archivo estático.
+- **DNI:** se guarda solo con dígitos y se muestra con puntos. El dueño ve su DNI completo; las
+  vistas administrativas lo reciben enmascarado (`****1234`).
 - **Pago simulado:** los datos de tarjeta no se envían al servidor. El total que se muestra y se
   registra es la suma del precio de cada butaca, sin costo de servicio ni descuentos.
 
@@ -164,7 +169,8 @@ las sesiones de gestión publican un aviso al programar la primera función de u
 
 - El token de sesión vive en memoria: recargar la página cierra la sesión.
 - El backend no modela imagen, elenco, género ni flags de publicación; se completan localmente.
-- El DNI, teléfono, localidad del titular y el comprobante quedan en memoria del navegador.
+- Los comprobantes se guardan en el disco local del backend. En producción conviene moverlos a un
+  volumen persistente o a un bucket S3 y definir una política de retención.
 - Dar de baja una obra o función con entradas vendidas falla por integridad referencial; el
   backend no elimina en cascada.
 - `entrada.codigo` (el que muestra el QR) y `ticket.codigo` (el que se envía por correo) son dos

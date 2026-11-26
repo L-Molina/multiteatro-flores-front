@@ -402,51 +402,6 @@ export default function Header() {
               {item.label}
             </NavLink>
           ))}
-          {user ? (
-            <NavLink
-              className={({ isActive }) =>
-                `px-3 py-2.5 rounded-lg text-sm ${
-                  isActive
-                    ? 'bg-[#143327] text-secondary font-semibold'
-                    : 'text-on-surface-variant hover:bg-[#133025] hover:text-white'
-                }`
-              }
-              to="/compras"
-              onClick={() => setOpen(false)}
-            >
-              Mis compras
-            </NavLink>
-          ) : null}
-          {user?.rol === ROLES.SUPERADMIN ? (
-            <NavLink
-              className={({ isActive }) =>
-                `px-3 py-2.5 rounded-lg text-sm ${
-                  isActive
-                    ? 'bg-[#143327] text-secondary font-semibold'
-                    : 'text-on-surface-variant hover:bg-[#133025] hover:text-white'
-                }`
-              }
-              to="/admin/obras"
-              onClick={() => setOpen(false)}
-            >
-              Obras y cartelera
-            </NavLink>
-          ) : null}
-          {user?.rol === ROLES.SUPERADMIN || user?.rol === ROLES.DUENO ? (
-            <NavLink
-              className={({ isActive }) =>
-                `px-3 py-2.5 rounded-lg text-sm ${
-                  isActive
-                    ? 'bg-[#143327] text-secondary font-semibold'
-                    : 'text-on-surface-variant hover:bg-[#133025] hover:text-white'
-                }`
-              }
-              to="/admin/funciones"
-              onClick={() => setOpen(false)}
-            >
-              Funciones y aforo
-            </NavLink>
-          ) : null}
           {!user ? (
             <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-[#1b4234]">
               <Link

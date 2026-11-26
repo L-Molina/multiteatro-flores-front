@@ -43,22 +43,23 @@ export default function PagoStep({
       setReceiptError("El comprobante debe ser una imagen o un PDF.");
       return;
     }
+    if (!file.size) {
+      setReceiptError("El archivo está vacío. Probá con otro.");
+      return;
+    }
     if (file.size > 2 * 1024 * 1024) {
       setReceiptError("El archivo no puede superar los 2 MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setReceiptError("");
-      onChangeReceipt({
-        name: file.name,
-        type: file.type,
-        dataUrl: String(reader.result),
-      });
-    };
-    reader.onerror = () =>
-      setReceiptError("No pudimos leer el archivo. Probá con otro.");
-    reader.readAsDataURL(file);
+    // Se conserva el File para subirlo después de crear la compra: el backend
+    // necesita el id para asociar el comprobante.
+    setReceiptError("");
+    onChangeReceipt({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      file,
+    });
   };
 
   return (
@@ -283,7 +284,7 @@ export default function PagoStep({
 
           <p className="text-[11px] text-ivory-muted">
             La reserva queda confirmada al validarse la transferencia. El
-            comprobante se adjunta a la compra en esta sesión.
+            comprobante se sube al servidor y queda asociado a la compra.
           </p>
         </div>
       ) : null}

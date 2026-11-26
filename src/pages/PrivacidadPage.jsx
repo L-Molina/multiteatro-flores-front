@@ -14,8 +14,9 @@ const SECCIONES = [
     id: 'datos',
     titulo: '2. Qué datos recopilamos',
     contenido: [
-      'Datos de identificación y contacto: nombre y correo electrónico de la cuenta. El DNI, teléfono y localidad se ingresan en el checkout para completar la compra y no se persisten en la base de esta versión.',
+      'Datos de identificación y contacto: nombre, correo electrónico, DNI, teléfono y localidad. El DNI, teléfono y localidad se guardan junto con la compra para gestionar la emisión y el acceso a las entradas. El DNI se almacena solo con dígitos y se muestra enmascarado en las vistas administrativas.',
       'Datos de la compra: obra, teatro, función, butacas seleccionadas, importe y estado de la operación, guardados en la base del backend.',
+      'Comprobante de transferencia: si elegís ese medio de pago, el archivo se sube al servidor y queda asociado a la compra. Se descarga solo mediante un endpoint autenticado, para el titular y el superadministrador.',
       'Datos de pago simulados: número de tarjeta, titular, vencimiento y código de seguridad. Quedan solo en la memoria del navegador: no se envían al servidor ni se almacenan. En la versión final deben procesarse directamente en la pasarela de pagos.',
       'Datos de navegación mínimos y preferencias de la interfaz. La sesión activa se mantiene en memoria y se cierra al recargar la página.',
     ],
