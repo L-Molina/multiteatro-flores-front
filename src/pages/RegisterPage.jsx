@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import useCatalog from "../hooks/useCatalog";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import { ROLE_LABELS, ROLES } from "../context/auth-context";
+import { ROLE_LABELS, ROLE_OPTIONS, ROLES } from "../context/auth-context";
 import {
   MAX,
   dniValido,
@@ -25,6 +26,7 @@ const FORM_INICIAL = {
   password: "",
   confirm: "",
   rol: ROLES.USUARIO,
+  teatroId: "",
   acepta: false,
 };
 
@@ -42,6 +44,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, register, logout, emailEnUso } = useAuth();
+  const { teatros } = useCatalog();
   const nextParam = searchParams.get("next") || "";
   const safeNext =
     nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
@@ -52,6 +55,17 @@ export default function RegisterPage() {
   const [generalError, setGeneralError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const esDueno = form.rol === ROLES.DUENO;
+
+  const onRoleChange = (rol) => {
+    setForm((prev) => ({
+      ...prev,
+      rol,
+      ...(rol !== ROLES.DUENO ? { teatroId: "" } : {}),
+    }));
+    setGeneralError("");
+    setErrors({});
+  };
 
   const update = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -91,6 +105,12 @@ export default function RegisterPage() {
     if (form.confirm !== form.password) {
       nextErrors.confirm = "Las contraseñas no coinciden.";
     }
+    if (!Object.values(ROLES).includes(form.rol)) {
+      nextErrors.rol = "Elegí un rol válido.";
+    }
+    if (esDueno && !form.teatroId) {
+      nextErrors.teatroId = "Seleccioná el teatro del que sos dueño.";
+    }
 
     if (!form.acepta) {
       nextErrors.acepta =
@@ -115,6 +135,10 @@ export default function RegisterPage() {
     setGeneralError("");
     if (!validar()) return;
 
+    const teatro = esDueno
+      ? teatros.find((item) => item.id === Number(form.teatroId))
+      : null;
+
     setSubmitting(true);
     const result = await register({
       nombre: limpiarTexto(form.nombre, MAX.nombre),
@@ -123,6 +147,9 @@ export default function RegisterPage() {
       tel: form.tel,
       localidad: limpiarTexto(form.localidad, MAX.localidad),
       password: form.password,
+      rol: form.rol,
+      teatroId: teatro?.id ?? null,
+      teatroNombre: teatro?.nombre ?? null,
     });
     setSubmitting(false);
 
@@ -141,69 +168,22 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-10 lg:py-14 page-enter">
-      <div className="grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-8 items-start">
-        <section className="flex flex-col gap-6 lg:sticky lg:top-28">
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-10 page-enter">
+      <div className="grid grid-cols-1  gap-8 items-start">
+        <section className="flex flex-col gap-6 lg:top-28">
           <div className="flex flex-col gap-3">
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-[1.1]">
-              Crear cuenta
+              Registrarse
             </h1>
             <p className="text-sm text-[#b8c7bf] leading-relaxed max-w-lg">
-              Creá tu cuenta para comprar entradas y consultar tu historial. El registro público
-              crea una cuenta de usuario común; las cuentas de gestión se cargan desde la base.
+              Si tenes alguna duda con respecto al uso de tus datos, consultá
+              nuestra{" "}
+              <Link className="text-secondary hover:underline" to="/privacidad">
+                política de privacidad
+              </Link>
+              .
             </p>
           </div>
-
-          <div className="rounded-xl border border-[#1e4d3a] bg-[#0c211a] p-4">
-            <p className="text-xs font-bold text-white mb-3 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base text-secondary">
-                verified_user
-              </span>
-              Roles de la plataforma
-            </p>
-            <div className="flex flex-col gap-3">
-              {[
-                {
-                  icon: "person",
-                  label: "Usuario común",
-                  description: "Compra entradas, recibe el boletín y consulta su historial.",
-                },
-                {
-                  icon: "storefront",
-                  label: "Dueño de teatro",
-                  description: "Gestiona solo las funciones y el aforo de su teatro (cuenta creada por administración).",
-                },
-                {
-                  icon: "admin_panel_settings",
-                  label: "Superadmin",
-                  description: "Administra obras, funciones y salas de todos los teatros (cuenta creada por administración).",
-                },
-              ].map((option) => (
-                <div key={option.label} className="flex items-start gap-2.5">
-                  <span className="material-symbols-outlined text-secondary text-lg mt-0.5">
-                    {option.icon}
-                  </span>
-                  <div>
-                    <p className="text-xs font-bold text-white">
-                      {option.label}
-                    </p>
-                    <p className="text-[11px] text-[#b8c7bf] leading-relaxed">
-                      {option.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-[11px] text-[#b8c7bf]/80 leading-relaxed">
-            Si tenes alguna duda con respecto al uso de tus datos, consultá
-            nuestra{" "}
-            <Link className="text-secondary hover:underline" to="/privacidad">
-              política de privacidad
-            </Link>
-            .
-          </p>
         </section>
 
         <section className="w-full rounded-2xl border border-[#1e4d3a] bg-[#0c211a] shadow-2xl p-5 sm:p-7">
@@ -472,6 +452,90 @@ export default function RegisterPage() {
                   </ErrorCampo>
                 </div>
               </div>
+
+              <fieldset className="flex flex-col gap-2.5">
+                <legend className="form-label mb-1">
+                  Rol dentro de la aplicación *
+                </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {ROLE_OPTIONS.map((option) => {
+                    const activo = form.rol === option.value;
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex flex-col gap-1.5 rounded-xl border p-3 cursor-pointer transition-colors ${
+                          activo
+                            ? "border-secondary/80 bg-[#143327]"
+                            : "border-[#1e4d3a] bg-[#071510] hover:border-secondary/40"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="rol"
+                          value={option.value}
+                          checked={activo}
+                          onChange={() => onRoleChange(option.value)}
+                          className="sr-only"
+                        />
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`material-symbols-outlined text-lg ${
+                              activo ? "text-secondary" : "text-[#b8c7bf]"
+                            }`}
+                          >
+                            {option.icon}
+                          </span>
+                          <span className="text-xs font-bold text-white">
+                            {option.label}
+                          </span>
+                          <span
+                            className={`ml-auto w-3.5 h-3.5 rounded-full border ${
+                              activo
+                                ? "border-secondary bg-secondary"
+                                : "border-[#1e4d3a] bg-transparent"
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span className="text-[11px] text-[#b8c7bf] leading-relaxed">
+                          {option.description}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <ErrorCampo id="error-register-rol">{errors.rol}</ErrorCampo>
+              </fieldset>
+
+              {esDueno ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="form-label" htmlFor="register-teatro">
+                    Teatro del que sos dueño *
+                  </label>
+                  <select
+                    id="register-teatro"
+                    className={`form-input ${
+                      errors.teatroId ? "form-error" : ""
+                    }`}
+                    value={form.teatroId}
+                    onChange={(event) => update("teatroId", event.target.value)}
+                    aria-invalid={Boolean(errors.teatroId)}
+                    aria-describedby={
+                      errors.teatroId ? "error-register-teatro" : undefined
+                    }
+                  >
+                    <option value="">Seleccioná un teatro...</option>
+                    {teatros.map((teatro) => (
+                      <option key={teatro.id} value={teatro.id}>
+                        {teatro.nombre} — {teatro.localidad}
+                      </option>
+                    ))}
+                  </select>
+                  <ErrorCampo id="error-register-teatro">
+                    {errors.teatroId}
+                  </ErrorCampo>
+                </div>
+              ) : null}
 
               <label className="flex items-start gap-2 text-xs text-[#b8c7bf] cursor-pointer">
                 <input

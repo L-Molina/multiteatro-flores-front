@@ -24,6 +24,7 @@ export const MAX = {
   dni: 8,
   telefono: 20,
   localidad: 60,
+  genero: 60,
   mensaje: 1000,
   titulo: 90,
   elenco: 140,

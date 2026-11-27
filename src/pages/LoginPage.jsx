@@ -68,71 +68,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] w-full">
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-8 py-10 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center page-enter">
-        <section className="flex flex-col gap-6">
+    <div className="w-full max-w-2xl mx-auto px-4 sm:px-8 py-10 page-enter">
+      <div className="grid grid-cols-1 gap-8 items-start">
+        <section className="flex flex-col gap-3">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-[1.1]">
             Iniciar Sesión
           </h1>
           <p className="text-sm sm:text-base text-[#b8c7bf] leading-relaxed max-w-lg">
-            Ingresá con tu cuenta de Multiteatro. Según tu rol vas a poder
-            comprar entradas, consultar tu historial o gestionar la cartelera y
-            las funciones de tus salas. La sesión se valida contra el backend y
-            se reinicia al recargar la página.
+            Ingresá con tu cuenta.
           </p>
-          <ul className="flex flex-col gap-3 text-sm text-[#b8c7bf]">
-            {[
-              [
-                "confirmation_number",
-                "Usuario común: compra entradas, recibe el boletín y ve su historial.",
-              ],
-              [
-                "storefront",
-                "Dueño de teatro: gestiona solo las funciones y el aforo de su teatro.",
-              ],
-              [
-                "admin_panel_settings",
-                "Superadmin: administra obras, funciones y salas de todos los teatros.",
-              ],
-            ].map(([icon, text]) => (
-              <li key={icon} className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-secondary text-xl">
-                  {icon}
-                </span>
-                <span>{text}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="rounded-xl border border-[#1e4d3a] bg-[#0c211a] p-4 text-xs text-[#b8c7bf]">
-            <p className="font-bold text-[#fdfbf7] mb-1 flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-base text-secondary">
-                person_add
-              </span>
-              ¿Todavía no tenés cuenta?
-            </p>
-            <p className="leading-relaxed">
-              El registro público crea una cuenta de usuario común. Las cuentas
-              de gestión (Superadmin y Dueño de teatro) se cargan desde la base
-              de datos.
-            </p>
-            <Link
-              className="inline-flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg border border-secondary/50 text-secondary text-[11px] font-bold uppercase tracking-wider hover:bg-[#143327] transition-colors"
-              to={
-                safeNext
-                  ? `/register?next=${encodeURIComponent(safeNext)}`
-                  : "/register"
-              }
-            >
-              Crear cuenta
-              <span className="material-symbols-outlined text-base">
-                arrow_forward
-              </span>
-            </Link>
-          </div>
         </section>
 
-        <section className="w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
-          <div className="rounded-2xl border border-[#1e4d3a] bg-[#0c211a] shadow-2xl p-6 sm:p-8">
+        <section className="w-full max-w-md mx-auto">
+          <div className="rounded-2xl border border-[#1e4d3a] bg-[#0c211a] shadow-2xl p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-11 h-11 rounded-xl bg-[#143327] border border-[#1e4d3a] flex items-center justify-center">
                 <span className="material-symbols-outlined text-secondary">

@@ -1,11 +1,3 @@
-/* Traducciones entre el contrato del backend y el modelo que ya usan las
-   pantallas del frontend.
-
-   El backend guarda lo comercial (obra, función, butaca, compra, entrada).
-   Lo que no existe en la base (imagen, elenco, género comercial, flags de
-   publicación, layout de sala) se completa con el catálogo local de la demo,
-   buscando por id. Así no hay que reescribir las pantallas ni tocar las
-   imágenes originales. */
 import { formatearDni } from "../utils/validacion";
 import { OBRAS_INICIALES, SALAS_INICIALES } from "../data/catalogo";
 import { ROLES } from "../context/auth-context";

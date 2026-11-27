@@ -13,6 +13,8 @@ import {
   limpiarTexto,
 } from "../utils/validacion";
 
+const OTRO_GENERO = "Otro";
+
 const EMPTY_FORM = {
   titulo: "",
   elenco: "",
@@ -71,6 +73,7 @@ export default function AdminObrasPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [generoOtro, setGeneroOtro] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
   const [imageError, setImageError] = useState("");
@@ -78,8 +81,8 @@ export default function AdminObrasPage() {
   const [selectedId, setSelectedId] = useState(null);
   const [nowIso] = useState(() => new Date().toISOString().slice(0, 16));
 
-  // La ocupación real viene del mapa de butacas de cada función (el backend
-  // exige token para ese endpoint). Se carga una vez y se reutiliza.
+  // La ocupación real viene del mapa de butacas de cada función (el backend exige token para ese endpoint). 
+  // Se carga una vez y se reutiliza.
   useEffect(() => {
     cargarAsientosDeFunciones(funciones.map((funcion) => funcion.id)).catch(() => {});
   }, [funciones, cargarAsientosDeFunciones]);
@@ -115,6 +118,7 @@ export default function AdminObrasPage() {
   const abrirNueva = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    setGeneroOtro("");
     setFormError("");
     setImageError("");
     setModalOpen(true);
@@ -122,10 +126,11 @@ export default function AdminObrasPage() {
 
   const abrirEdicion = (obra) => {
     setEditing(obra);
+    const generoConocido = GENEROS.includes(obra.genero);
     setForm({
       titulo: obra.titulo,
       elenco: obra.elenco,
-      genero: obra.genero,
+      genero: generoConocido ? obra.genero : OTRO_GENERO,
       clasificacion: obra.clasificacion || "ATP",
       precio: obra.precio,
       vip: obra.vip,
@@ -137,6 +142,7 @@ export default function AdminObrasPage() {
       publicada: obra.publicada !== false,
       preventa: obra.preventa !== false,
     });
+    setGeneroOtro(generoConocido ? "" : obra.genero);
     setFormError("");
     setImageError("");
     setModalOpen(true);
@@ -197,9 +203,18 @@ export default function AdminObrasPage() {
       );
       return;
     }
+    const genero =
+      form.genero === OTRO_GENERO
+        ? limpiarTexto(generoOtro, MAX.genero).trim()
+        : form.genero;
+    if (!genero) {
+      setFormError("Ingresá el nombre del género de la obra.");
+      return;
+    }
     const payload = {
       ...form,
       titulo,
+      genero,
       elenco:
         limpiarTexto(form.elenco, MAX.elenco).trim() ||
         "Compañía independiente",
@@ -400,19 +415,6 @@ export default function AdminObrasPage() {
             <option value="standup">Ciclo Stand-Up</option>
             <option value="conciertos">Concierto / Música</option>
             <option value="comedia">Comedia</option>
-          </select>
-          <select
-            value={salaFiltro}
-            onChange={(event) => setSalaFiltro(event.target.value)}
-            className="select-arrow w-full sm:w-48 px-3.5 py-2.5 rounded-lg bg-surface-dark border border-panel-border text-xs text-on-surface focus:outline-none focus:border-secondary cursor-pointer"
-            aria-label="Filtrar por sala"
-          >
-            <option value="">Sala: Todas las Salas</option>
-            {salas.map((sala) => (
-              <option key={sala.id} value={sala.id}>
-                {sala.teatro} — {sala.nombre} ({sala.capacidad})
-              </option>
-            ))}
           </select>
           <select
             value={estadoFiltro}
@@ -764,15 +766,35 @@ export default function AdminObrasPage() {
               id="obra-genero"
               className="admin-input"
               value={form.genero}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, genero: event.target.value }))
-              }
+              onChange={(event) => {
+                const generoSeleccionado = event.target.value;
+                setForm((prev) => ({ ...prev, genero: generoSeleccionado }));
+                if (generoSeleccionado !== OTRO_GENERO) setGeneroOtro("");
+              }}
             >
               {GENEROS.map((item) => (
                 <option key={item}>{item}</option>
               ))}
+              <option value={OTRO_GENERO}>{OTRO_GENERO}</option>
             </select>
           </div>
+          {form.genero === OTRO_GENERO ? (
+            <div className="admin-field">
+              <label className="admin-label" htmlFor="obra-genero-otro">
+                Nombre del género *
+              </label>
+              <input
+                id="obra-genero-otro"
+                className="admin-input"
+                maxLength={MAX.genero}
+                placeholder="Ej.: Teatro • Suspenso"
+                value={generoOtro}
+                onChange={(event) =>
+                  setGeneroOtro(limpiarTexto(event.target.value, MAX.genero))
+                }
+              />
+            </div>
+          ) : null}
           <div className="admin-field">
             <label className="admin-label" htmlFor="obra-clasificacion">
               Clasificación

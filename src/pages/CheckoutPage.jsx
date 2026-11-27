@@ -82,7 +82,7 @@ const HOLDER_INITIAL = {
 
 const CARD_INITIAL = {
   number: '4517 0000 0000 8829',
-  name: 'FACUNDO N MORALES',
+  name: '',
   exp: '09 / 28',
   cvv: '842',
 }

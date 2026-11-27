@@ -11,8 +11,9 @@ import { normalizarEmail } from '../utils/validacion'
    recargar la página hay que volver a ingresar, igual que en el backend
    (SesionService también guarda los tokens en memoria).
 
-   El backend solo permite registrarse como CLIENTE. Las cuentas de gestión
-   (ADMIN / SUPERADMIN) se crean por administración o vienen en script.sql. */
+   El backend guarda el registro como CLIENTE. El rol elegido en el formulario
+   se aplica a la sesión local (comportamiento de la demo), como hacía el
+   prototipo antes de conectarse a la API. */
 
 const TEATROS_PUBLICOS = '/teatros'
 
@@ -24,6 +25,7 @@ export function AuthProvider({ children }) {
   const completarPerfil = useCallback(async (usuarioBackend) => {
     const extra = perfiles.current[normalizarEmail(usuarioBackend.email)] || {}
     const base = mapUsuario(usuarioBackend, extra)
+    if (extra.rol) base.rol = extra.rol
 
     // Un ADMIN no trae teatroId: se deriva del teatro público que lo tiene
     // como administrador. Es un dato de presentación para el panel.
@@ -80,6 +82,7 @@ export function AuthProvider({ children }) {
             name: payload.nombre,
             email: cleanEmail,
             password: String(payload.password || ''),
+            rol: payload.rol,
           },
           { auth: false },
         )
@@ -88,6 +91,9 @@ export function AuthProvider({ children }) {
           dni: payload.dni || '',
           tel: payload.tel || '',
           localidad: payload.localidad || '',
+          rol: payload.rol,
+          teatroId: payload.teatroId ?? null,
+          teatroNombre: payload.teatroNombre ?? null,
         }
         setEmailsRegistrados((prev) =>
           prev.includes(cleanEmail) ? prev : [...prev, cleanEmail],
